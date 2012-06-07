@@ -2,8 +2,8 @@ antes de nil
 nil
 blablabla
 funcion de hhiroshi
-
-funcion de avatartavox
+lalala
+funcion de avatartavox v2
 
 funcion de eder
 funcion de pelusa

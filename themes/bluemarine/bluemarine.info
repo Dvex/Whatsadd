@@ -1,0 +1,11 @@
+name = Bluemarine
+description = Table-based multi-column theme with a marine and ash color scheme.
+version = VERSION
+core = 6.x
+engine = phptemplate
+
+; Information added by drupal.org packaging script on 2012-02-29
+version = "6.25"
+project = "drupal"
+datestamp = "1330534547"
+

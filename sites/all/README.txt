@@ -8,3 +8,4 @@ funcion de avatartavox v2
 funcion de eder
 funcion de pelusa
 
+hhiroshi2 de frente

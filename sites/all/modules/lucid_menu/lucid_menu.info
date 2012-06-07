@@ -1,0 +1,15 @@
+description = "Replaces menus with highly customizable dhtml menus."
+name = "Lucid menu"
+; Information added by drupal.org packaging script on 2008-10-03
+version = "1.0"
+core= "6.x"
+project = "lucid_menu"
+datestamp = "1223071221"
+
+
+; Information added by drupal.org packaging script on 2010-06-15
+version = "6.x-1.3"
+core = "6.x"
+project = "lucid_menu"
+datestamp = "1276613707"
+

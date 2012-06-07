@@ -1,0 +1,431 @@
+<?php
+/**
+ * @file
+ *
+ * The code in this module provides example of common customizations to
+ * modules/fb.  The code found here is used on http://drupalforfacebook.org.
+ * Feel free to enable this module if you want your site to behave in just the
+ * same way.  However, advanced Drupal developers may be better served copying
+ * these examples into their own module, and customizing as needed.
+ */
+
+/**
+ * Implements hook_link().
+ *
+ * Add an XFBML like button to all node pages.  The button will appear next to
+ * other node links, such as "add new comment".
+ */
+function fb_example_link($type, $object, $teaser = FALSE) {
+  if ($type == 'node' && !$teaser) {
+    $items = array();
+    if (variable_get('fb_example_link_add_like', TRUE)) { // Switch to control this behavior.
+      $url = fb_scrub_urls(url('node/' . $object->nid, array('absolute' => TRUE)));
+      $items['dff_like'] = array(
+        'title' => "<fb:like send=\"true\" ref=\"node/$object->nid\" href={$url}></fb:like>",
+        'html' => TRUE,
+      );
+    }
+    return $items;
+  }
+}
+
+/**
+ * Implements hook_fb_friend_invite_page_wrap_alter().
+ *
+ * @see modules/fb/contrib/fb_friend.module
+ *
+ * Here we customize the block which invites facebook friends to visit
+ * the current page.
+ *
+ * By default the invite form is wrapped in serverfbml and embedded
+ * within a page.  Here we alter the data before it is rendered.  We
+ * change the wrapper type to fb_connect_fbml_popup.  The result is a
+ * link which pops up the invite form.
+ */
+function fb_example_fb_friend_invite_page_wrap_alter(&$elem) {
+  // Replace serverfbml with popup
+  if ($elem['#type'] == 'fb_form_serverfbml') {
+    $elem['#type'] = 'fb_fbml_popup';
+    $elem['#title'] = t('Invite Friends to View This Page');
+    $elem['#link_text'] = t('Invite friends to view this page');
+    $elem['#attributes'] = array('width' => 760);
+  }
+}
+
+/**
+ * Implements hook_fb_friend_invite_app_alter().
+ *
+ * Customizes aspects of the invitation form.
+ */
+function fb_example_fb_friend_invite_app_alter(&$fbml) {
+  $fbml['selector']['#attributes']['cols'] = 3;
+  $fbml['selector']['#attributes']['email_invite'] = FALSE;
+  $fbml['selector']['#attributes']['import_external_friends'] = FALSE;
+}
+function fb_example_fb_friend_invite_app_wrap_alter(&$elem) {
+  // Replace serverfbml with popup
+  if ($elem['#type'] == 'fb_form_serverfbml') {
+    $elem['#type'] = 'fb_fbml_popup';
+    $elem['#title'] = t('Invite Friends to install this application');
+    $elem['#link_text'] = t('Invite friends to install this application');
+    $elem['#attributes'] = array('width' => 760);
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Adds a checkbox to node edit and comment forms.  This checkbox lets
+ * facebook users know that content may be published to their Wall,
+ * and gives them a chance to prevent that.
+ */
+function fb_example_form_alter(&$form, $form_state, $form_id) {
+  // Add stream publish option.
+  if (isset($GLOBALS['_fb']) && fb_facebook_user() && variable_get('fb_example_stream_form_alter', TRUE)) {
+    if ($form['#id'] == 'node-form') {
+      // Add checkbox to control feed publish.
+      $form['fb_example']['stream_publish'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Share on Facebook Wall'),
+        '#default_value' => variable_get('fb_example_stream_publish_default', FALSE),
+      );
+    }
+    elseif ($form['form_id']['#value'] == 'comment_form') {
+      // Add checkbox to control feed publish.
+      $form['fb_example']['stream_publish'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Share on Facebook Wall'),
+        '#default_value' => variable_get('fb_example_stream_publish_default', FALSE),
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_nodeapi().
+ *
+ * Publish to facebook Walls when users submit nodes.
+ *
+ * @see http://developers.facebook.com/docs/reference/rest/stream.publish
+ * @see http://developers.facebook.com/docs/guides/attachments
+ */
+function fb_example_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  if ($op == 'insert' || $op == 'update') {
+    if (isset($node->stream_publish) && $node->stream_publish) {
+      $attachment = array(
+        'name' => $node->title,
+        'href' => url('node/' . $node->nid, array('absolute' => TRUE)),
+        'description' => filter_xss($node->teaser, array()),
+      );
+
+      /*
+        if ($picture = $GLOBALS['user']->picture) {
+        $url = url($picture, array('absolute' => TRUE));
+        $attachment['media'][] = array(
+        'type' => 'image',
+        'src' => $url,
+        'href' => $url,
+        );
+        }
+      */
+      if ($logo_path = theme_get_setting('logo_path')) {
+        $url = url($logo_path, array('absolute' => TRUE));
+        //dpm($logo_path, "logo_path is $logo_path and url is $url");
+        $attachment['media'][] = array(
+          'type' => 'image',
+          'src' => $url,
+          'href' => $url,
+        );
+      }
+
+      /* Facebook has disabled the message.  Deprecated.
+      $user_message = t('Check out my latest post on !site...',
+                        array('!site' => variable_get('site_name', t('my Drupal for Facebook powered site'))));
+      */
+      $actions = array();
+      $actions[] = array(
+        'text' => t('Read More'),
+        'href' => url('node/' . $node->nid, array('absolute' => TRUE)),
+      );
+      fb_stream_publish_dialog(array(
+                                 'attachment' => $attachment,
+                                 'action_links' => $actions,
+                               ));
+    }
+  }
+
+  // Another way to add like button, as part of a node.
+  if ($op == 'view' && variable_get('fb_example_nodeapi_add_like', FALSE)) {
+    $url = fb_scrub_urls(url('node/' . $node->nid, array('absolute' => TRUE)));
+    $node->content['dff_like'] = array(
+      '#value' => "<fb:like href={$url}></fb:like>",
+      '#type' => 'markup',
+      '#prefix' => '<div class="dff_like_wrapper">',
+      '#suffix' => '</div>',
+    );
+  }
+
+
+}
+
+/**
+ * Implementation of hook_comment().
+ *
+ * Publish to facebook Walls when users submit comments.
+ */
+function fb_example_comment(&$a1, $op) {
+  if ($op == 'insert' || $op == 'update') {
+    $comment_url = url('node/' . $a1['nid'], array('absolute' => TRUE, 'fragment' => 'comment-' . $a1['cid']));
+
+    if ($a1['stream_publish']) {
+      //dpm($a1, "fb_example_comment, publishing to stream");
+      $node = node_load($a1['nid']);
+
+      // http://wiki.developers.facebook.com/index.php/Attachment_(Streams)
+      $attachment = array(
+        'name' => $a1['subject'],
+        'href' => $comment_url,
+        'description' => $a1['comment'],
+        //'properties' => array(t('In reply to') => array('text' => $node->title, 'href' => url("node/" . $node->nid, array('absolute' => TRUE)))),
+      );
+
+      if ($logo_path = theme_get_setting('logo_path')) {
+        $url = url($logo_path, array('absolute' => TRUE, 'fb_canvas' => FALSE));
+        //dpm($logo_path, "logo_path is $logo_path and url is $url");
+        $attachment['media'][] = array(
+          'type' => 'image',
+          'src' => $url,
+          'href' => $url,
+        );
+      }
+
+      $user_message = t('Check out my latest comment on !site...',
+                        array('!site' => variable_get('site_name', t('my Drupal for Facebook powered site'))));
+      $actions = array();
+      $actions[] = array('text' => t('Read More'),
+                         'href' => url('node/' . $a1['nid'], array('absolute' => TRUE)),
+      );
+      fb_stream_publish_dialog(array('message' => $user_message,
+                                     'attachment' => $attachment,
+                                     'action_links' => $actions,
+                               ));
+    }
+  }
+}
+
+
+/**
+ * Implements hook_fb_required_perms_alter().
+ *
+ * Builds a list of extended permissions required when authorizing the current
+ * facebook app.
+ *
+ * @see http://developers.facebook.com/docs/authentication/permissions
+ */
+function fb_example_fb_required_perms_alter(&$perms) {
+  if (variable_get('fb_example_require_email', TRUE)) {
+    $perms[] = 'email';
+  }
+}
+
+
+/**
+ * Implements hook_fb().
+ *
+ * This hook provides an opportunity to customize the behavior of Facebook Applications.
+ *
+ * @param $op
+ *   Indicates what operation is currently being performed, or which behavior
+ *   can be customized.  There are a number of these.  In some cases,
+ *   modules/fb is informing other modules, and in other operations it is
+ *   asking for information.
+ *   - FB_OP_INITIALIZE - The facebook sdk has been initialized.  This tells a
+ *     facebook application is enable for the current request.
+ *   - FB_OP_APP_IS_AUTHORIZED - The visitor to this page has authorized the
+ *     application.
+ *
+ * @param $data
+ *   Associative array of information specific to this operation. Usually, but not always, contains:
+ *   - 'fb' - The API provided by the facebook-php-sdk.
+ *   - 'fb_app' - The data about this application stored by fb_app.module.
+ *   - 'fbu' - If the current user is known, their facebook id.
+ *
+ * @param $return
+ *   An op-specific return value.  Your hook should change this reference
+ *   variable, and not return it.  Some operations return an array of data,
+ *   which may be collaboratively built by multiple implementations of this
+ *   hook.
+ *
+ *
+ * Note, some example code is disabled.  Change the FALSE to TRUE in
+ * variable_get calls to test the code.
+ */
+function fb_example_fb($op, $data, &$return) {
+  $fb_app = isset($data['fb_app']) ? $data['fb_app'] : NULL;
+  $fb = isset($data['fb']) ? $data['fb'] : NULL;
+
+  // Uncomment next line to figure out when this hook is called and what it is passed.
+  //dpm(func_get_args(), "fb_example_fb($op) called"); // debug
+
+  if ($op == FB_OP_INITIALIZE) {
+    // This $op is invoked after fb.module initializes Facebook's PHP SDK.
+
+    // When third-party cookies are disabled on Firefox, Facebook's Javascript will not remember the user is connected.  We can work around this by storing credentials in our session and passing it javascript on every page.  It's sort of a hack, so let's do it only on Firefox browsers.
+    // See http://developers.facebook.com/bugs/173032012783482
+    if (arg(0) != 'admin') { // Don't muck vars on admin pages.
+      if (strpos($_SERVER['HTTP_USER_AGENT'], 'Firefox') !== FALSE) {
+        $GLOBALS['conf'][FB_VAR_JS_USE_SESSION] = TRUE;
+        $GLOBALS['conf'][FB_VAR_JS_GET_LOGIN_STATUS] = FALSE;
+        $GLOBALS['conf'][FB_VAR_JS_TEST_LOGIN_STATUS] = TRUE;
+      }
+    }
+  }
+
+  if ($op == FB_OP_AJAX_EVENT) {
+    // We get FB_OP_AJAX_EVENT when fb.js calls us in reponse to a javascript event.
+    if ($data['event_type'] == 'edge.create' && variable_get('fb_example_like_thanks', FALSE)) {
+      // Facebook calls this event 'edge.create', because there's a new 'edge'
+      // in the open graph.
+      drupal_set_message(t('Thanks for clicking Like!'));
+      // reloading allows user to see message.  This example is contrived,
+      // there's no real reason to reload page here, and it prevents users
+      // from adding a comment.  In practice, you could put some other javascript here.
+      $return[] = "FB_JS.reload();";
+    }
+    if ($data['event_type'] == 'session_change' && variable_get('fb_example_session_change_redirect', FALSE)) {
+      if (!isset($GLOBALS['fb_example_new_user'])) {
+        // The user has clicked the connect button, or logged into/out-of
+        // facebook in another browser window, then refreshed.
+        if ($fbu = fb_facebook_user()) {
+          // The user has connected (as opposed to logged out).  Let's redirect
+          // them to our 'welcome' page.  Replace 'welcome' with the path you
+          // really want.
+          $url = url('welcome',
+                     array('absolute' => TRUE, 'fb_canvas' => fb_is_canvas()));
+          // We return javascript to be evaluated by fb.js.
+          $return[] = "FB_JS.reload('$url');";
+        }
+      }
+      elseif ($GLOBALS['fb_example_new_user']) {
+        // The user has clicked the connect button and that results in a new
+        // user being created.  Note this will work only when fb_example.module
+        // has heavier weight than fb_user.module.  See fb_example.install.
+
+        // Send the user to their edit page.
+        $url = url('user/' . $GLOBALS['user']->uid . '/edit',
+                   array('absolute' => TRUE, 'fb_canvas' => fb_is_canvas()));
+        // We return javascript to be evaluated by fb.js.
+        $return[] = "FB_JS.reload('$url');";
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_fb_user().
+ *
+ * This hook provided by fb_user.module will notify us when a new account is
+ * created or a local account is logged in via facebook.
+ *
+ * @param $op
+ *   Indicates what operation is currently being performed, or which behavior
+ *   can be customized.  There are a number of these.  In some cases,
+ *   modules/fb is informing other modules, and in other operations it is
+ *   asking for information.
+ *   - FB_USER_OP_PRE_USER - You have a chance to the name or other account
+ *     attributes, before a new user account is created.
+ *   - FB_USER_OP_POST_USER - A new user account was created for a facebook user
+ *     who authorized an app.
+ *
+ * @param $data
+ *   Associative array of information specific to this operation.
+ *   Usually, but not always, contains:
+ *   - 'fb' - The API provided by the facebook-php-sdk.
+ *   - 'fb_app' - The data about this application stored by fb_app.module.
+ *   - 'fbu' - If the current user is known, their facebook id.
+ *
+ * @param $return
+ *   An op-specific return value.  Your hook should change this reference
+ *   variable, and not return it.  Some operations return an array of data,
+ *   which may be collaboratively built by multiple implementations of this
+ *   hook.
+ *
+ */
+function fb_example_fb_user($op, $data, &$return) {
+  $fb_app = isset($data['fb_app']) ? $data['fb_app'] : NULL;
+  $fb = isset($data['fb']) ? $data['fb'] : NULL;
+
+  if ($op == FB_USER_OP_POST_USER) {
+    // Set a global that can be checked in hook_fb, above.  Note for this to
+    // work properly, fb_example.module must be weighted heavier then
+    // fb_user.module.  (See fb_example.install).
+    $GLOBALS['fb_example_new_user'] = TRUE;
+  }
+}
+
+
+/**
+ * Implements hook_preprocess_page().
+ *
+ * Under admin >> site building >> facebook apps >> canvas pages, you'll find
+ * some settings regarding the "processing" of canvas pages.  This processing
+ * changes links for the entire page, so that all links point to
+ * http://apps.facebook.com/... instead of Drupal's normal base_url.
+ *
+ * If instead you only want some of the links on a page to work this way, and
+ * leave some unmodified, you can take the approach shown here.  In this hook
+ * we process the text in some regions of the page, but not all.  So for
+ * example links in the normal 'content' will not be modified.
+ *
+ * The code shown here could also be located in your theme's preprocess
+ * function, or even in a page template.
+ *
+ * Note this function is only relavent when the checkboxes on admin >> site
+ * building >> facebook apps >> canvas pages are disabled.
+ */
+function fb_example_preprocess_page(&$variables) {
+  if (module_exists('fb_canvas') && fb_is_canvas()) {
+    include_once drupal_get_path('module', 'fb') . '/fb.process.inc';
+
+    // Process links in these regions.
+    foreach (array('content', 'header', 'footer', 'left', 'preface_first', 'preface_middle', 'preface_last') as $region) {
+      $variables[$region] = fb_process($variables[$region], array(
+                                         'add_target' => '_top',
+                                         'absolute_links' => TRUE,
+                                       ));
+    }
+  }
+}
+
+/**
+ * Implements hook_init().
+ *
+ * Workaround for a problem with Drupal where a logged in user gets access
+ * denied when visiting the login or register pages.  This can easily happen
+ * when clicking the facebook connect button on the login or register forms.
+ * Here will simply redirect the user to the profile page when that happens.
+ */
+function fb_example_init() {
+  global $user;
+  if ($user->uid != 0) {
+    if (arg(0) == 'user' &&
+        (arg(1) == 'register' || arg(2) == 'login')) {
+      // Avoid Drupal's awkward access denied.
+      if (function_exists('fb_canvas_goto')) {
+        fb_canvas_goto('user');
+      }
+      else {
+        drupal_goto('user');
+      }
+    }
+  }
+  elseif (arg(0) == 'logout') {
+    // Avoid Drupal's awkward access denied.
+    if (function_exists('fb_canvas_goto')) {
+      fb_canvas_goto('<front>');
+    }
+    else {
+      drupal_goto('<front>');
+    }
+  }
+}

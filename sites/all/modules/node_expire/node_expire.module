@@ -1,0 +1,117 @@
+<?php
+// $Id: node_expire.module,v 1.9.2.6 2010/12/11 18:42:07 vikramy Exp $
+
+/**
+ * @file
+ * Set a timer into your content, allowing you to perform customized actions.
+ */
+
+DEFINE('NODE_EXPIRE_FORMAT',    'Y-m-d');
+DEFINE('NODE_EXPIRE_FORMAT_JS', 'yy-mm-dd');
+
+/**
+ * Implementation of hook_cron().
+ */
+function node_expire_cron() {
+  if ($query = db_query('SELECT n.nid FROM {node} n
+      JOIN {node_expire} ne ON n.nid = ne.nid
+      WHERE ne.expire <= %d', time())) {
+    $nids = array();
+    while ($node = db_fetch_object($query)) {
+      $nids[] = $node->nid;
+      node_expire_set_expired($node->nid);
+      $node = node_load($node->nid);
+      rules_invoke_event('node_expired', array('node' => &$node));
+    }
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ *
+ * Add expiration options to the node entry forms
+ */
+function node_expire_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['type'])
+      and $form['type']['#value'] .'_node_form' == $form_id
+      and $ntypes = variable_get('node_expire_ntypes', array())
+      and $ntypes = $ntypes[$form['type']['#value']]) {
+
+    module_load_include('nodeapi.inc', 'node_expire');
+    _node_expire_form_alter_nodeform($ntypes, $form, $form_state, $form_id);
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ *
+ * Enable/Disable expiration feature on node types
+ */
+function node_expire_form_node_type_form_alter(&$form, &$form_state) {
+  if (user_access('administer node expire')) {
+    $ntypes = variable_get('node_expire_ntypes', array());
+    $ntype  = $form['#node_type']->type;
+    $form['workflow']['node_expire'] = array(
+      '#title'         => t('Default expiration date'),
+      '#description'   => t('Default date to consider the node expired.') .' '. t('Format: PHP <a href="http://www.php.net/strtotime" target="_blank">strtotime format</a>.') .' '. t('Leave it blank if this content type never expires.'),
+      '#type'          => 'textfield',
+      '#default_value' => empty($ntypes[$ntype]['default']) ? '' : $ntypes[$ntype]['default'],
+    );
+    $form['workflow']['node_expire_max'] = array(
+      '#title'         => t('Expiration date limit'),
+      '#description'   => t('The max date to consider the node expired.') .' '. t('Format: PHP <a href="http://www.php.net/strtotime" target="_blank">strtotime format</a>.') .' '. t('Leave it blank if this there is no limit date.'),
+      '#type'          => 'textfield',
+      '#default_value' => empty($ntypes[$ntype]['max']) ? '' : $ntypes[$ntype]['max'],
+    );
+    $form['workflow']['node_expire_required'] = array(
+      '#title'         => t('Expiration date required'),
+      '#type'          => 'checkbox',
+      '#default_value' => !empty($ntypes[$ntype]['required']),
+    );
+
+    // Add special validate/submit functions
+    module_load_include('ntype.inc', 'node_expire');
+    $form['#validate'][]  = '_node_expire_form_node_type_form_alter_validate';
+    $form['#submit'][]    = '_node_expire_form_node_type_form_alter_submit';
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function node_expire_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  // Only deal with node types that have the Node expire feature enabled
+  $ntypes = variable_get('node_expire_ntypes', array());
+  if (!$ntypes = $ntypes[$node->type]) {
+    return;
+  }
+
+  module_load_include('nodeapi.inc', 'node_expire');
+  _node_expire_nodeapi($ntypes, $node, $op, $a3, $a4);
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function node_expire_perm() {
+  return array('administer node expire', 'edit node expire');
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function node_expire_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'node_expire'),
+  );
+}
+
+/**
+ *
+ * @param $nids
+ *   node ID that should set the expired flag.
+ */
+function node_expire_set_expired($nid) {
+  db_query("UPDATE {node_expire} SET expired = '1', lastnotify = '" . time() . "' WHERE nid = '" . $nid . "' AND (lastnotify = '0' || expired != '1')");
+}

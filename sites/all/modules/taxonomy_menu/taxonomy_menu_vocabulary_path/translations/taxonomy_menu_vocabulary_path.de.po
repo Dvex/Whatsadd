@@ -1,0 +1,55 @@
+# $Id: taxonomy_menu_vocabulary_path.de.po,v 1.1.2.1 2009/10/31 22:33:56 hass Exp $
+#
+# German translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  taxonomy_menu.module,v 1.19.2.2.2.32 2009/03/26 02:52:28 indytechcook
+#  taxonomy_menu.install,v 1.2.2.1.2.7 2009/03/25 21:29:13 indytechcook
+#  taxonomy_menu.info,v 1.2.4.3 2009/02/20 17:49:51 indytechcook
+#  taxonomy_menu_hierarchy.info,v 1.1.2.1 2009/03/01 05:07:35 indytechcook
+#  taxonomy_menu_path_custom.info,v 1.1.2.1 2009/03/08 18:54:00 indytechcook
+#  taxonomy_menu_hierarchy.module,v 1.1.2.2 2009/03/14 21:21:06 indytechcook
+#  taxonomy_menu_path_custom.module,v 1.1.2.4 2009/03/14 21:21:07 indytechcook
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2009-10-31 22:28+0100\n"
+"PO-Revision-Date: 2009-10-31 23:00+0100\n"
+"Last-Translator: Alexander Haß <http://drupal.org/user/85918>\n"
+"Language-Team: German\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"X-Poedit-Language: German\n"
+"X-Poedit-Country: GERMANY\n"
+
+#: taxonomy_menu_vocabulary_path/taxonomy_menu_vocabulary_path.module:21
+msgid "Custom path for vocabulary"
+msgstr "Benutzerdefinierter Pfad für das Vokabular"
+
+#: taxonomy_menu_vocabulary_path/taxonomy_menu_vocabulary_path.module:22
+msgid "Enter the path you would like to use for this vocabulary. Only used if menu path type is \"Vocabulary path\"."
+msgstr "Einen Pfad angeben, der für dieses Vokabular verwendet werden soll. Dieser wird nur verwendet, wenn der Typ des Menüpfades „Vokabular-Pfad“ lautet."
+
+#: taxonomy_menu_vocabulary_path/taxonomy_menu_vocabulary_path.module:29
+msgid "Use vocabulary path as base path"
+msgstr "Vokabular-Pfad als Basis-Pfad verwenden"
+
+#: taxonomy_menu_vocabulary_path/taxonomy_menu_vocabulary_path.module:33
+msgid "Use the custom path for vocabulary as base path for term menu items. Only used if Menu path type is \"Vocabulary path\"."
+msgstr "Den benutzerdefinierten Pfad für das Vokabular als Basis-Pfad für die Menüeinträge der Begriffe verwenden. Dieser wird nur verwendet, wenn der Typ des Menüpfades „Vokabular-Pfad“ lautet."
+
+#: taxonomy_menu_vocabulary_path/taxonomy_menu_vocabulary_path.module:48
+msgid "Vocabulary path"
+msgstr "Vokabular-Pfad"
+
+#: taxonomy_menu_vocabulary_path/taxonomy_menu_vocabulary_path.info:0
+msgid "Taxonomy Menu Vocabulary Path"
+msgstr "Taxonomie-Menü für Vokabular-Pfad"
+
+#: taxonomy_menu_vocabulary_path/taxonomy_menu_vocabulary_path.info:0
+msgid "Enables a custom path for each vocabulary through Taxonomy Menu."
+msgstr "Ermöglicht benutzerdefinierte Basis-Pfade für jedes Vokabular im Taxonomie-Menü."
+

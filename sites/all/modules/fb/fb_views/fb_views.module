@@ -1,0 +1,218 @@
+<?php
+
+/**
+ * @file
+ * Facebook-specific views arguments, filters, etc...
+ */
+function fb_views_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'fb_views'),
+  );
+}
+
+function fb_views_views_handlers() {
+  $path = drupal_get_path('module', 'fb_views');
+  return array(
+    'handlers' => array(
+
+      // fields
+      'fb_views_handler_profile_pic' => array(
+        'parent' => 'views_handler_field',
+        'path' => $path,
+      ),
+
+      // filters
+      'fb_views_handler_filter_friends' => array(
+        'parent' => 'views_handler_filter_boolean_operator',
+        'path' => $path,
+      ),
+      'fb_views_handler_filter_profile_tab' => array(
+        'parent' => 'views_handler_filter_boolean_operator',
+        'path' => $path,
+      ),
+
+      // arguments
+      'fb_views_handler_author_is_friend' => array(
+        'parent' => 'views_handler_argument_user_uid',
+        'path' => $path,
+      ),
+    ),
+  );
+}
+
+function fb_views_views_data() {
+  // fb_user table will only exists when fb_user.module enabled.
+  $data['fb_user'] = array(
+    'table' => array(
+      'group' => t('Drupal for Facebook'),
+      'join' => array(
+        'node' => array(
+          'left_field' => 'uid',
+          'field' => 'uid',
+        ),
+        'users' => array(
+          'left_field' => 'uid',
+          'field' => 'uid',
+        ),
+      ),
+    ),
+    'picture' => array(
+      'real field' => 'fbu',
+      'title' => t('Picture'),
+      'field' => array('handler' => 'fb_views_handler_profile_pic'),
+      'help' => t('FBML to show a picture on Facebook Connect or Canvas pages.'),
+    ),
+    'fb_user_author' => array(
+      'real field' => 'fbu',
+      'title' => t('Author is friend'),
+      'argument' => array('handler' => 'fb_views_handler_author_is_friend'),
+      'help' => t('Limit results to Facebook friends of a user.'),
+    ),
+    'fb_views_filter_friends' => array(
+      'real field' => 'fbu', // Does this do anything?
+      'title' => t('Friend of current user'),
+      'filter' => array('handler' => 'fb_views_handler_filter_friends'),
+      'help' => t('Limit results to friends of the current user.  This filter will succeed when users are logged into Facebook Connect or Canvas pages.'),
+    ),
+    'fb_views_filter_profile_tab' => array(
+      'title' => t('Profile Tab Owner'),
+      'filter' => array('handler' => 'fb_views_handler_filter_profile_tab'),
+      'help' => t('Limit results to profile tab user.  Only works on Facebook Profile Tabs.'),
+    ),
+  );
+
+  return $data;
+}
+
+// BIG TODO: the following views hooks are for views 1.  The style plugins are not yet converted to Views 2.
+
+
+/**
+ * Introduce a theme style that mimics a facebook discussion board.
+ *
+ * To use: make a theme which provides a page view, and select view type
+ * 'Facebook Discussion'.  Then under Fields, include Node: Title, Node:
+ * Created Time, Node: Author Name, Comment: Count, Comment: Last Comment
+ * Author, Comment: Last Comment Time.
+ *
+ * It may not look exactly like a facebook discussion, but comes close.
+ */
+function fb_views_views_style_plugins() {
+  $items = array();
+  $items['fb_discussion'] = array(
+    'name' => t('Facebook Discussion'),
+    'theme' => 'views_fb_discussion',
+    'summary_theme' => 'views_summary',
+    'needs_table_header' => TRUE,
+    'needs_fields' => TRUE, // without this, table header will not be built
+  );
+  $items['fb_teasers'] = array(
+    'name' => t('Facebook Teaser List'),
+    'theme' => 'views_fb_teasers',
+    'summary_theme' => 'views_summary',
+    'needs_table_header' => TRUE,
+    'needs_fields' => TRUE, // without this, table header will not be built
+  );
+  return $items;
+}
+
+function theme_views_fb_discussion($view, $nodes, $type) {
+  //drupal_set_message("theme_views_fb_discussion, type is '$type'" . print_r($view, 1) . dprint_r($nodes, 1));  // debug
+
+  if ($type == 'page') {
+    // use tablesort code to generate the sort links.
+    $sorts = array();
+    $ts = tablesort_init($view->table_header);
+    foreach ($view->table_header as $cell) {
+      $th = tablesort_header($cell, $view->table_header, $ts);
+      $sorts[] = $th['data'];
+    }
+    $output .= theme('sortable_header_links', $sorts);
+
+    $output .= theme('fb_discussion_nodes', $view, $nodes);
+  }
+  elseif ($type == 'block') {
+    // If were displaying in a block, its most likely the profile page, where
+    // all styles have to be inline.  So here we do our best to mimic the
+    // block view of a facebook discussion.
+    foreach ($nodes as $data) {
+      $reply_count = format_plural($data->node_comment_statistics_comment_count+1, '1 post', '@count posts');
+
+      $output .= '<div style="padding: 10px 20px 10px 5px; border-bottom: 1px solid #cccccc;">';
+      $output .= '<div style="font-weight: bold; font-size: 10px;">' . l($data->node_title, 'node/' . $data->nid, array(), NULL, NULL, FALSE) . "</div><div style=\"font-size: 9px;\"><span style=\"color: #333333;\">$reply_count</span><span style=\"color: #888888; margin-left: 5px;\">Updated " . format_interval(time() - $data->node_comment_statistics_last_comment_timestamp) . " ago.</span></div>\n";
+      $output .= "</div>\n";
+    }
+  }
+  return $output;
+}
+
+function theme_sortable_header_links($items = array()) {
+  if (!empty($items)) {
+    $output .= "<ul class=\"links sortable_header_links\">";
+    $output .= "<li class=\"first\">" . t('Sort by') . '</li>';
+    foreach ($items as $item) {
+      $output .= '<li>' . $item . '</li>';
+    }
+    $output .= "</ul>";
+  }
+  return $output;
+}
+
+function theme_fb_discussion_nodes($view, $items = array()) {
+  $fields = _views_get_fields();
+  if (!empty($items)) {
+    foreach ($items as $item) {
+      $out = array();
+      $row = array();
+      foreach ($view->field as $field) {
+        if ($fields[$field['id']]['visible'] !== FALSE) {
+          $out[$field['field']] = views_theme_field('views_handle_field', $field['queryname'], $fields, $field, $item, $view);
+        }
+      }
+
+      $reply_count = format_plural($item->node_comment_statistics_comment_count + 1, '1 post', '@count posts');
+
+      // Title link, reply count and created date
+      $row[] = array(
+        'class' => 'fb_discussion_topic',
+        'data' => '<div class="title">' . $out['title'] . '</div>' .
+        '<div class="info"><span class="post">' . $reply_count . '.</span>&nbsp;<span class="created">' .
+        t('Created !time', array('!time' => $out['created'])) . '.</span></div>');
+      // Most recent reply info
+      $row[] = array(
+        'class' => 'fb_discussion_reply',
+        'data' => '<div class="author">'.
+        t('Latest post by !name',
+          array('!name' => $out['last_comment_name'])) .
+        '</div><div class="timestamp">' . $out['last_comment_timestamp'] . '</div>');
+      $rows[] = $row;
+    }
+    if (count($rows)) {
+      $output = theme('table', array(), $rows,
+                      array('class' => 'fb_discussion'));
+    }
+  }
+  return $output;
+}
+
+
+function theme_views_fb_teasers($view, $nodes, $type) {
+  //drupal_set_message("theme_views_fb_teasers, type is '$type'" . print_r($view, 1) . dprint_r($nodes, 1));  // debug
+
+  // If were displaying in a block, its most likely the profile page, where
+  // all styles have to be inline.  So here we do our best to mimic the
+  // block view of a facebook discussion.
+  foreach ($nodes as $data) {
+    $node = node_load($data->nid);
+    $output .= '<div style="padding: 10px 20px 10px 5px; border-bottom: 1px solid #cccccc;">';
+    $output .= '<div style="font-weight: bold; font-size: 10px;">' .
+      l($node->title, 'node/' . $data->nid, array(), NULL, NULL, FALSE) .
+      "</div>";
+    $node = node_build_content($node, TRUE, FALSE);
+    $output .= drupal_render($node->content);
+    $output .= "</div>\n";
+  }
+  return $output;
+}
+

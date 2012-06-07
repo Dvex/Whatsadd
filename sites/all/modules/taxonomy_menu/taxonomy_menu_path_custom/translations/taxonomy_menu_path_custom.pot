@@ -1,0 +1,57 @@
+# $Id: taxonomy_menu_path_custom.pot,v 1.1.2.1 2009/10/31 22:33:56 hass Exp $
+#
+# LANGUAGE translation of Drupal (taxonomy_menu_path_custom)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  taxonomy_menu_path_custom.module,v 1.1.2.6 2009/10/31 18:39:33 indytechcook
+#  taxonomy_menu_path_custom.info,v 1.1.2.2 2009/10/31 18:39:33 indytechcook
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-10-31 22:28+0100\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: taxonomy_menu_path_custom/taxonomy_menu_path_custom.module:19
+msgid "Display depth in custom path"
+msgstr ""
+
+#: taxonomy_menu_path_custom/taxonomy_menu_path_custom.module:21
+msgid "Only used with a custom path.<br />To use depth the path in the view has to have the path of '<base path for custom path>/%/%'. The two arguments must be 'Term ID (with depth)' and 'Depth modifier'.<br />Have this view setup <strong>before</strong> you create this taxonomy menu. Otherwise leave this field empty!"
+msgstr ""
+
+#: taxonomy_menu_path_custom/taxonomy_menu_path_custom.module:26
+msgid "Base path for custom path"
+msgstr ""
+
+#: taxonomy_menu_path_custom/taxonomy_menu_path_custom.module:30
+msgid "Only used with a custom path.<br />You need to have a view with path 'custom path/%' and an argument 'Term ID' <strong>before</strong> you create this taxonomy menu."
+msgstr ""
+
+#: taxonomy_menu_path_custom/taxonomy_menu_path_custom.module:33
+msgid "Use term name"
+msgstr ""
+
+#: taxonomy_menu_path_custom/taxonomy_menu_path_custom.module:37
+msgid "If checked, use term name instead of term ID."
+msgstr ""
+
+#: taxonomy_menu_path_custom/taxonomy_menu_path_custom.module:48
+msgid "Custom path"
+msgstr ""
+
+#: taxonomy_menu_path_custom/taxonomy_menu_path_custom.info:0
+msgid "Taxonomy Menu Custom Path"
+msgstr ""
+
+#: taxonomy_menu_path_custom/taxonomy_menu_path_custom.info:0
+msgid "Enables Custom path base to Taxonomy Menu."
+msgstr ""
+

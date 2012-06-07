@@ -1,0 +1,13 @@
+name = Open Graph and Timeline
+description = (fb_graph.module) Add <a href=http://developers.facebook.com/docs/beta/>Open Graph</a> metadata to node pages, and Timeline helper functions.
+package = Drupal for Facebook
+core = 6.x
+dependencies[] = fb
+
+
+; Information added by drupal.org packaging script on 2012-04-03
+version = "6.x-3.2"
+core = "6.x"
+project = "fb"
+datestamp = "1333489846"
+

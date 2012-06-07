@@ -1,0 +1,30 @@
+body div#block-search-0.block div.inner div.content form#search-block-form div div.container-inline div#edit-search-block-form-1-wrapper.form-item{
+	margin-left: 200px;
+}
+
+body div#block-search-0.block div.inner div.content form#search-block-form div div.container-inline input#edit-submit.form-submit{
+	float: right;
+}
+
+body div#block-search-0.block div.inner div.block-divider{
+	visibility: hidden;
+}
+
+body div.page div#content-inner-inner.content-inner-inner div#content-content.content-content div.node div.inner div.links{
+	float: right;
+}
+
+body div.page div#content-inner-inner.content-inner-inner div#content-content.content-content div.node div.inner div.links ul.links li{
+	position: relative;
+}
+
+body div.page div#content-inner-inner.content-inner-inner div#content-content.content-content div.node div.inner div.links ul.links li.comment_add{
+	left: 123px;
+}
+body div.page div#content-inner-inner.content-inner-inner div#content-content.content-content div.node div.inner div.links ul.links li.contactlink{
+	top: 16px;
+}
+
+body div#content-content.content-content div.node div.inner div.terms ul.links:before{
+	content: 'Categoria(s): ';
+}

@@ -1,0 +1,19 @@
+<?php
+/**
+ * @file
+ * Install file for fb_example.module.
+ * Set the weight of our module to be after og.
+ */
+
+
+// Set weight so that fb_example comes after fb_user.
+function fb_example_install() {
+  // So we fall after og_vocab and og
+  db_query("UPDATE {system} SET weight = 3 WHERE name='fb_example'");
+}
+
+function fb_example_update_1() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {system} SET weight = 3 WHERE name='fb_example'");
+  return $ret;
+}

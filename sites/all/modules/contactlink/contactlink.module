@@ -1,0 +1,36 @@
+<?php
+// $Id: contactlink.module,v 1.5.2.1 2008/04/11 19:37:25 mikeyp Exp $
+
+/**
+ * Implementation of hook_link().
+ */
+function contactlink_link($type, $object = 0, $main = 0) {
+  global $user;
+  $links = array();
+  // Only show link to authenticated users, because user contact
+  // is not available to anonymous users.
+  if ($user->uid && in_array($type, array('node', 'comment')) && ($type != 'node' || variable_get('contactlink_'. $object->type, 1)) && $account = user_load(array('uid' => $object->uid))) {
+    if ($account->contact && ($account->uid != $user->uid)) {
+      $links['contactlink'] = array(
+        'title' => t('Contact the author'),
+        'href' => "user/$object->uid/contact",
+        'attributes' => array('title' => t('Email the author via the contact form.')),
+      );
+    }
+  }
+  return $links;
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function contactlink_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'node_type_form' && isset($form['identity']['type'])) {
+    $form['workflow']['contactlink'] = array(
+      '#type' => 'radios',
+      '#title' => t('Show "contact the author" link for this content type'),
+      '#default_value' => variable_get('contactlink_'. $form['#node_type']->type, 1),
+      '#options' => array(t('Disabled'), t('Enabled')),
+    );
+  }
+}

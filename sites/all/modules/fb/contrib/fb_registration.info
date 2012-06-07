@@ -1,0 +1,14 @@
+name = FB Registration
+description = (fb_registration.module) Replaces Drupal user registration form with facebook <a href=http://developers.facebook.com/docs/user_registration target=_blank>registration</a>.
+package = Drupal for Facebook - contrib
+core = 6.x
+dependencies[] = fb
+dependencies[] = fb_app
+
+
+; Information added by drupal.org packaging script on 2012-04-03
+version = "6.x-3.2"
+core = "6.x"
+project = "fb"
+datestamp = "1333489846"
+

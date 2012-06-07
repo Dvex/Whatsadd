@@ -1,0 +1,84 @@
+<?php
+/**
+ * @file
+ * Install file for fb_devel.module.
+ *
+ */
+
+
+/**
+ * Implementation of hook_requirements().
+ *
+ * Show warnings as necessary in Status Report page.
+ *
+ */
+function fb_devel_requirements($phase) {
+  $t = get_t();
+  $items = array();
+  if ($phase == 'runtime') {
+    $result = db_query('SELECT count(uid) FROM {users} WHERE data LIKE "%\"app_specific\"%" OR data LIKE "%\"is_app_user\"%" OR data LIKE "\"fbu\"%"');
+    $count = db_result($result);
+    if ($count) {
+      $status = array(
+        'title' => $t('Drupal for Facebook obsolete data.'),
+        'description' => $t('Early versions of Drupal for Facebook stored information in users table.  Leave fb_devel.module enabled, and this data will be cleared during cron jobs.'),
+      );
+      $status['value'] = $t('Found %count rows', array('%count' => $count));
+      $status['severity'] = REQUIREMENT_WARNING;
+      $items[] = $status;
+    }
+
+
+    // Confirm no accounts without authmap.  The problem caused by old bug, should only occur on sites that have been upgraded.
+    if (module_exists('fb_user')) {
+      $result = db_query('SELECT count(u.uid) FROM {users} u LEFT JOIN {fb_user} a ON u.uid=a.uid WHERE u.name LIKE "%@facebook%" AND a.uid IS NULL');
+      $count = db_result($result);
+      if ($count) {
+        $status = array(
+          'title' => $t('Accounts named NNN@facebook without fb_user map'),
+          'description' => $t('Drupal for Facebook may have failed to create a map entry for these accounts.  Please report to the Drupal for Facebook issue queue, we are working on a fix.'),
+          'value' => $count,
+          'severity' => REQUIREMENT_WARNING,
+        );
+        $items[] = $status;
+      }
+    }
+  }
+
+  // Test if json extensions are loaded.
+  if (defined('SERVICES_JSON_SLICE')) { // defined in facebook's json wrapper, which is not compatible with PHP's JSON extensions.
+    $items[] = array(
+      'title' => $t('JSON extension for PHP'),
+      'severity' => REQUIREMENT_ERROR,
+      'description' => $t('JSON extension must be present for Drupal for Facebook modules.  You can wait (forever) for facebook to <a href="!url">fix their bug</a>, or install the JSON extension. ', array('!url' => 'http://bugs.developers.facebook.com/show_bug.cgi?id=4351')),
+    );
+  }
+
+
+  // clean url sanity check
+  if (!variable_get('clean_url', FALSE) && module_exists('fb_canvas') && $phase == 'runtime') {
+    $message =
+    $items[] = array(
+      'title' => $t('Clean URLs'),
+      'severity' => REQUIREMENT_ERROR,
+      'description' => $t('Drupal for Facebook will not function properly until <a href=!url>clean URLs</a> are turned on.',
+                          array('!url' => url('admin/settings/clean-urls'))),
+    );
+  }
+
+  if (!count($items) && $phase == 'runtime') {
+    $items[] = array(
+      'title' => $t('Drupal for Facebook Devel'),
+      'value' => $t('No worries'),
+      'description' => $t('All sanity checks OK.'),
+    );
+  }
+  return $items;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function fb_devel_uninstall() {
+  db_query("DELETE FROM {blocks} WHERE module = 'fb_devel'");
+}

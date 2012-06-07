@@ -1,0 +1,13 @@
+name = Facebook Apps
+description = (fb_app.module) Host and administer <a href=http://developers.facebook.com target=_blank>Facebook apps</a>.
+package = Drupal for Facebook
+dependencies[] = fb
+core = 6.x
+
+
+; Information added by drupal.org packaging script on 2012-04-03
+version = "6.x-3.2"
+core = "6.x"
+project = "fb"
+datestamp = "1333489846"
+

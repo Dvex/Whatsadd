@@ -1,0 +1,165 @@
+<?php
+/**
+ * @file
+ * Install file for fb_user.module.
+ *
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function fb_user_app_install() {
+  // Create tables.
+  drupal_install_schema('fb_user_app');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function fb_user_app_uninstall() {
+
+  // Remove tables.
+  drupal_uninstall_schema('fb_user_app');
+
+  // Remove variables.
+  variable_del(FB_USER_APP_VAR_TRACK_EVERY_PAGE);
+  variable_del(FB_USER_APP_VAR_USERS_THAT_GRANT_OFFLINE);
+  variable_del(FB_USER_APP_VAR_TRACK_USERS);
+  variable_del(FB_USER_APP_VAR_TRACK_PAGES);
+}
+
+function fb_user_app_schema() {
+  $schema['fb_user_app'] = array(
+    'fields' => array(
+      'apikey' => array( // @TODO use app id instead of apikey.
+        'type' => 'varchar', 'length' => 128, 'not null' => TRUE,
+      ),
+      'fbu' => array('type' => 'int', 'size' => 'big', 'not null' => TRUE, ),
+      'user_type' => array(
+        'type' => 'varchar', 'length' => 64, 'not null' => TRUE, 'default' => '',
+      ),
+      'added' => array(
+        'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE,
+      ),
+      'proxied_email' => array(
+        'type' => 'varchar', 'length' => 255, 'not null' => TRUE,
+      ),
+      'time_cron' => array(
+        'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE,
+      ),
+      'time_access' => array(
+        'type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE,
+      ),
+      'session_key' => array(
+        'type' => 'varchar', 'length' => 255, 'not null' => FALSE,
+        'description' => 'Historically this was a session key, now an access token.',
+      ),
+      'session_key_expires' => array(
+        'type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('apikey', 'fbu'),
+    'indexes' => array(
+      'time_cron' => array('time_cron'),
+    ),
+  );
+
+  return $schema;
+}
+
+function fb_user_app_update_1() {
+  fb_user_install();
+  // Changed name of table to fb_user_app
+  $ret[] = update_sql("DROP TABLE IF EXISTS {fb_app_user}");
+  return $ret;
+}
+
+function fb_user_app_update_2() {
+  $ret = array();
+  // Add local uid to fb_user_app table.
+  $ret[] = update_sql("ALTER TABLE {fb_user_app} ADD COLUMN uid int(11) DEFAULT NULL");
+  $ret[] = update_sql("ALTER TABLE {fb_user_app} ADD INDEX (uid)");
+  //$ret[] = update_sql("ALTER TABLE {fb_user_app} ADD UNIQUE INDEX (uid, apikey)");
+  return $ret;
+}
+
+function fb_user_app_update_3() {
+  // populate the uid column we created in update 2
+  $ret[] = update_sql("UPDATE {fb_user_app},{authmap} SET {fb_user_app}.uid={authmap}.uid WHERE substring_index(authname, '@', 1)=fbu");
+  return $ret;
+}
+
+function fb_user_app_update_6000() {
+  $ret = array();
+  // We used to alter users.mail column here, to make it long enough for proxied emails.  But we no longer do this, instead we store proxied email in the fb_user_app table.
+  // See update 6001.
+  return $ret;
+}
+
+function fb_user_app_update_6001() {
+  $ret = array();
+  // Add column for proxied email.
+  // http://wiki.developers.facebook.com/index.php/Proxied_Email
+  db_add_column($ret, 'fb_user_app', 'proxied_email',
+                'varchar(255)', array('not null' => TRUE));
+  return $ret;
+}
+
+function fb_user_app_update_6002() {
+  $ret = array();
+  // Allow session_key to be null, and 255 chars
+  $ret[] = update_sql("ALTER TABLE {fb_user_app} CHANGE session_key session_key varchar(255)");
+  // Allow NULL
+  $ret[] = update_sql("ALTER TABLE {fb_user_app} CHANGE session_key_expires session_key_expires int(11)");
+  return $ret;
+}
+
+function fb_user_app_update_6004() {
+  $ret = array();
+
+  // Increase FBU to 64 bit as per announcement at http://developers.facebook.com/news.php?blog=1&story=226
+  db_drop_primary_key($ret, 'fb_user_app');
+  db_change_field($ret, 'fb_user_app', 'fbu', 'fbu', array(
+    'type' => 'int',
+    'size' => 'big',
+    'not null' => TRUE
+  ),
+  array(
+    'primary key' => array('apikey', 'fbu')
+  ));
+
+  return $ret;
+}
+
+function fb_user_app_update_6005() {
+  $ret = array();
+
+  // Making uid unique was a bad idea.  It can be 0.
+  // One of the following should work, depending on whether the key was added during install or update.
+  // The other will create a warning, unfortunately.
+  db_drop_unique_key($ret, 'fb_user_app', 'apikey_uid');
+  db_drop_unique_key($ret, 'fb_user_app', 'uid_2');
+  db_drop_unique_key($ret, 'fb_user_app', 'uid_4');
+  drupal_set_message(t('Note that if you see a warning about "Can\'t DROP ...", it is safe to ignore that message.  See fb_user.install.'));
+  return $ret;
+}
+
+function fb_user_app_update_6006() {
+  $ret = array();
+
+  $schema = fb_user_app_schema();
+  db_add_field($ret, 'fb_user_app', 'user_type', $schema['fb_user_app']['fields']['user_type']);
+  return $ret;
+}
+
+function fb_user_app_update_6007() {
+  $ret = array();
+  db_drop_field($ret, 'fb_user_app', 'uid');
+  return $ret;
+}
+
+function fb_user_app_update_6008() {
+  $ret = array();
+  db_add_index($ret, 'fb_user_app', 'time_cron', array('time_cron'));
+  return $ret;
+}

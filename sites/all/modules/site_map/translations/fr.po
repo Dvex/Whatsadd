@@ -1,0 +1,235 @@
+# $Id: fr.po,v 1.1.2.3 2009/07/21 11:18:49 slybud Exp $
+#
+# French translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  site_map.admin.inc,v 1.1.2.5 2008/10/22 11:16:04 frjo
+#  site_map.module,v 1.39.2.9 2008/11/08 18:57:33 frjo
+#  site_map.info,v 1.4 2007/09/26 14:13:37 frjo
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: french translation for drupal6 site_map module\n"
+"POT-Creation-Date: 2009-07-21 13:01+0200\n"
+"PO-Revision-Date: 2009-07-21 13:17+0100\n"
+"Last-Translator: Sylvain Moreau <sylvain.moreau@ows.fr>\n"
+"Language-Team: Sylvain Moreau, OWS <sylvain.moreau@ows.fr>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+"X-Poedit-Language: French\n"
+
+#: site_map.admin.inc:22;38
+msgid "Site map message"
+msgstr "Message du plan du site"
+
+#: site_map.admin.inc:23;42
+msgid "Define a message to be displayed above the site map."
+msgstr "Définir un message à afficher au dessus du plan du site."
+
+#: site_map.admin.inc:28
+msgid "For language %lang_name (code %lang_code)"
+msgstr "Pour la langue %lang_name (code %lang_code)"
+
+#: site_map.admin.inc:48
+msgid "Site map content"
+msgstr "Contenu du plan du site"
+
+#: site_map.admin.inc:52
+msgid "Show front page"
+msgstr "Affiche la page d'accueil"
+
+#: site_map.admin.inc:55
+msgid "When enabled, this option will include the front page in the site map."
+msgstr "Si elle est activée, cette option incluera la page d'accueil sur le plan du site."
+
+#: site_map.admin.inc:59
+msgid "Show active blog authors"
+msgstr "Afficher les auteurs de blog actifs"
+
+#: site_map.admin.inc:62
+msgid "When enabled, this option will show the 10 most active blog authors."
+msgstr "Si elle est activée, cette option affichera les 10 auteurs de blog les plus actifs."
+
+#: site_map.admin.inc:72
+msgid "Books to include in the site map"
+msgstr "Livres à inclure dans le plan du site"
+
+#: site_map.admin.inc:76;89;100;122
+msgid "Ctrl-click (Windows) or Command-click (Mac) to select more than one value."
+msgstr "Ctrl-clic (Windows) ou Command-clic (Mac) pour sélectionner plus d'une valeur."
+
+#: site_map.admin.inc:85
+msgid "Menus to include in the site map for !lang (code !code)"
+msgstr "menus à inclure dans le plan du site en !lang (code !code)"
+
+#: site_map.admin.inc:96
+msgid "Menus to include in the site map"
+msgstr "Menus à inclure dans le plan du site"
+
+#: site_map.admin.inc:105
+msgid "Show FAQ content"
+msgstr "Afficher le contenu de la FAQ"
+
+#: site_map.admin.inc:108
+msgid "When enabled, this option will include the content from the FAQ module in the site map."
+msgstr "Si elle est activée, cette option incluera le contenu du module FAQ dans le plan du site."
+
+#: site_map.admin.inc:118
+msgid "Categories to include in the site map"
+msgstr "Catégories à inclure dans le plan du site"
+
+#: site_map.admin.inc:127
+msgid "Categories settings"
+msgstr "Paramètres des catégories"
+
+#: site_map.admin.inc:131
+msgid "Show books expanded"
+msgstr "Montrer les livres dépliés"
+
+#: site_map.admin.inc:134
+msgid "When enabled, this option will show all children pages for each book."
+msgstr "Affichée, cette option montrera les pages enfants pour chaque livre"
+
+#: site_map.admin.inc:138
+msgid "Show node counts by categories"
+msgstr "Montrer les compteurs des noeuds par catégorie"
+
+#: site_map.admin.inc:141
+msgid "When enabled, this option will show the number of nodes in each taxonomy term."
+msgstr "Activée, cette option montrera le nombre de noeuds dans chaque terme de taxonomie"
+
+#: site_map.admin.inc:145
+msgid "Categories depth"
+msgstr "Profondeur des catégories"
+
+#: site_map.admin.inc:149
+msgid "Specify how many subcategories should be included on the categorie page. Enter \"all\" to include all subcategories,\"0\" to include no subcategories, or \"-1\" not to append the depth at all."
+msgstr "Spécifiez combien de sous-catégories doivent êtres incluses sur la page de catégorie. Saisissez \"tous\" pour inclure toutes les sous-catégories, \"0\" pour n'inclure aucune sous-catégorie, ou \"-1\" pour ne pas tenir compte de la profondeur du tout."
+
+#: site_map.admin.inc:154
+msgid "RSS settings"
+msgstr "Paramètres RSS"
+
+#: site_map.admin.inc:158
+msgid "Include RSS links"
+msgstr "Inclure les liens RSS"
+
+#: site_map.admin.inc:161
+msgid "When enabled, this option will show links to the RSS feeds for each category and blog."
+msgstr "Activée, cette option montrera les liens vers les flux RSS pour chaque catégorie et blogue."
+
+#: site_map.admin.inc:165
+msgid "RSS feed depth"
+msgstr "Profondeur des flux RSS"
+
+#: site_map.admin.inc:169
+msgid "Specify how many subcategories should be included in the RSS feed. Enter \"all\" to include all subcategories or \"0\" to include no subcategories."
+msgstr "Sépcifiez combien de sous-catégories doivent être incluses dans le flux RSS. Saisissez \"tous\" pour inclure toutes les sous-catégories, ou \"0\" pour n'inclure aucune sous-catégorie."
+
+#: site_map.module:74
+msgid "Syndicate (site map)"
+msgstr "Syndiquer (plan du site)"
+
+#: site_map.module:79;87
+msgid "Syndicate"
+msgstr "Syndication"
+
+#: site_map.module:88
+msgid "more"
+msgstr "plus"
+
+#: site_map.module:88
+msgid "View the site map to see more RSS feeds."
+msgstr "Voir le plan du site pour voir plus de flux RSS."
+
+#: site_map.module:110
+msgid "This is a link to a content RSS feed"
+msgstr "Un flux RSS est signalé par ce pictogramme"
+
+#: site_map.module:112
+msgid "This is a link to a comment RSS feed"
+msgstr "Ceci est un lien vers un flux RSS de commentaires"
+
+#: site_map.module:174;174
+msgid "Syndicate content"
+msgstr "Syndiquer le contenu"
+
+#: site_map.module:180;180
+msgid "Syndicate comments"
+msgstr "Syndiquer les commentaires"
+
+#: site_map.module:191
+msgid "Front page"
+msgstr "Page d'accueil"
+
+#: site_map.module:192
+msgid "Front page of %sn"
+msgstr "Page d'accueil de %sn"
+
+#: site_map.module:204
+msgid "Blogs"
+msgstr "Blogs"
+
+#: site_map.module:205
+msgid "Community blog and recent blog authors at %sn."
+msgstr "Blog de la communauté et auteurs de blog récents sur %sn."
+
+#: site_map.module:208
+msgid "All blogs"
+msgstr "Tous les blogues"
+
+#: site_map.module:214
+msgid "!s's blog"
+msgstr "Le blog de !s"
+
+#: site_map.module:226
+msgid "Audio"
+msgstr "Audio"
+
+#: site_map.module:227
+msgid "Audio content"
+msgstr "Contenu audio"
+
+#: site_map.module:237
+msgid "Video"
+msgstr "Vidéo"
+
+#: site_map.module:238
+msgid "Video content"
+msgstr "Contenu vidéo"
+
+#: site_map.module:251
+msgid "Books"
+msgstr "Livres"
+
+#: site_map.module:252
+msgid "Books at %sn."
+msgstr "Livres sur %sn."
+
+#: site_map.module:307
+msgid "Frequently Asked Questions"
+msgstr "Foire Aux Questions"
+
+#: site_map.module:25
+msgid "access site map"
+msgstr "accès au plan du site"
+
+#: site_map.module:50;59
+#: site_map.info:0
+msgid "Site map"
+msgstr "Plan du site"
+
+#: site_map.module:51
+msgid "Control what should be displayed on the site map."
+msgstr "Contrôler ce qui doit être affiché sur le plan du site."
+
+#: site_map.module:60
+msgid "Display a site map with RSS feeds."
+msgstr "Affiche un plan du site avec flux RSS."
+
+#: site_map.info:0
+msgid "Display a site map."
+msgstr "Afficher un plan du site"
+

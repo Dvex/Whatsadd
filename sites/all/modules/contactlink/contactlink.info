@@ -1,0 +1,12 @@
+; $Id: contactlink.info,v 1.3 2007/12/06 09:27:12 mikeyp Exp $
+name = Contact link
+description = Adds an author contact link to content and comments with a link to the author's contact page.
+dependencies[] = contact
+core = 6.x
+
+; Information added by drupal.org packaging script on 2008-06-03
+version = "6.x-1.0"
+core = "6.x"
+project = "contactlink"
+datestamp = "1212452703"
+

@@ -1,0 +1,11 @@
+name = "Account menu"
+description = "Provides dynamic Log in/My account/Log out account menu"
+core = "6.x"
+dependencies[] = menu
+
+; Information added by drupal.org packaging script on 2012-02-11
+version = "6.x-1.9"
+core = "6.x"
+project = "accountmenu"
+datestamp = "1329004237"
+

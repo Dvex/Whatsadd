@@ -1,0 +1,301 @@
+<?php
+/**
+ * @file
+ * Implementation of Drupal for Facebook application.
+ *
+ * For maximum flexibility, DFF allows multiple implementations of the
+ * "application" logic.  The important bit is our implementation of
+ * hook_fb().  This module should suffice for just about everyone, but
+ * if you want to implement your own, go right ahead.
+ */
+
+define('FB_APP_REQ_API_KEY', 'fb_sig_api_key');
+
+// Events that a facebook app might need to know about:
+define('FB_APP_EVENT_POST_AUTHORIZE', 'post_authorize');
+define('FB_APP_EVENT_POST_REMOVE', 'post_remove');
+
+define('FB_APP_PATH_EVENT', 'fb_app/event');
+define('FB_APP_PATH_EVENT_ARGS', 2);
+
+define('FB_APP_OP_EVENT', 'fb_app_event');
+
+/**
+ * Implementation of hook_fb().
+ */
+function fb_app_fb($op, $data, &$return) {
+  $fb = isset($data['fb']) ? $data['fb'] : NULL;
+  $fb_app = isset($data['fb_app']) ? $data['fb_app'] : NULL;
+
+  if ($op == FB_OP_GET_APP) {
+    // Load app data, using the criteria passed in.
+    $args = array();
+    $where = array();
+
+    // We also support these ways to query an app.  Columns in fb_app table.
+    foreach (array(
+               'fba_id' => '%d',
+               'id' => "'%s'", // varchar, not int, in db schema
+               'apikey' => "'%s'", // deprecated
+               'label' => "'%s'",
+             ) as $key => $type) {
+      if (isset($data[$key])) {
+        $where[] = "$key = $type";
+        $args[] = $data[$key];
+      }
+    }
+    // Status is a special query.  Admin pages include disabled apps.
+    if (isset($data['status'])) {
+      $where[] = "status >= %d";
+      $args[] = $data['status'];
+    }
+    else {
+      $where[] = "status > 0";
+    }
+
+    if (count($args)) {
+      $fb_app = db_fetch_object(db_query("SELECT * FROM {fb_app} fba WHERE " . implode(' AND ', $where), $args));
+    }
+    if ($fb_app) {
+      $return = $fb_app;
+    }
+  }
+  elseif ($op == FB_OP_GET_ALL_APPS) {
+    // Return all known applications, including disabled.
+    $result = db_query("SELECT fba.* FROM {fb_app} fba");
+    while ($app = db_fetch_object($result)) {
+      $return[] = $app;
+    }
+  }
+  elseif ($op == FB_OP_POST_INIT) {
+    // Include our admin hooks.
+    if (fb_is_fb_admin_page()) {
+      require drupal_get_path('module', 'fb_app') . '/fb_app.admin.inc';
+    }
+  }
+  elseif ($op == FB_OP_CURRENT_APP) {
+    // Try to determine the current application from fb_settings.
+    // If we fail, fb_canvas or fb_connect module will hopefully succeed.
+
+    if (!$return && ($id = fb_settings(FB_SETTINGS_ID))) {
+      $return = fb_get_app(array('id' => $id));
+    }
+    elseif (!$return && ($apikey = fb_settings(FB_SETTINGS_APIKEY))) { // deprecated XXX
+      $return = fb_get_app(array('apikey' => $apikey));
+    }
+  }
+}
+
+
+/**
+ * Implementation of hook_menu().
+ */
+function fb_app_menu() {
+  $items = array();
+  // Allow facebook to notify on various events, like adding or removing an app.
+  $items[FB_APP_PATH_EVENT . '/%/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'fb_app_event_cb',
+    'page arguments' => array(
+      FB_APP_PATH_EVENT_ARGS, // label
+      FB_APP_PATH_EVENT_ARGS+1, // event type
+    ),
+    'type' => MENU_CALLBACK,
+  );
+
+  // Administration.
+  $items[FB_PATH_ADMIN . '/fb_app_create'] = array(
+    'title' => 'Add App',
+    'description' => 'Host an application on this server.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fb_app_edit_form'),
+    'access arguments' => array(FB_PERM_ADMINISTER),
+    'file' => 'fb_app.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -1,
+  );
+  $items[FB_PATH_ADMIN_APPS . '/%fb/fb_app'] = array(
+    'title' => 'Edit',
+    'description' => 'Edit Facebook Application',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fb_app_edit_form', FB_PATH_ADMIN_APPS_ARGS),
+    'access arguments' => array(FB_PERM_ADMINISTER),
+    'file' => 'fb_app.admin.inc',
+    'weight' => -1,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items[FB_PATH_ADMIN_APPS . '/%fb/fb_app/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fb_app_admin_delete_confirm_form',
+                              FB_PATH_ADMIN_APPS_ARGS),
+    'access arguments' => array(FB_PERM_ADMINISTER),
+    'file' => 'fb_app.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+
+/**
+ * Callback for FB_APP_PATH_EVENT.
+ *
+ * We don't act on the events directly.  We pass the information along via
+ * hook_fb.  Other modules are thus notified of the event and can take action.
+ */
+function fb_app_event_cb($label, $event_type) {
+  $fb_app = fb_get_app(array('label' => $label));
+  if ($fb_app)
+    $fb = fb_api_init($fb_app);
+
+  $data = array(
+    'fb_app' => $fb_app,
+    'fb' => $fb,
+    'event_type' => $event_type,
+  );
+  if (isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json') {
+    $json = file_get_contents('php://input');
+    $data['event_data'] = json_decode($json);
+  }
+  else {
+    $data['event_data'] = $_REQUEST;
+  }
+
+  fb_invoke(FB_APP_OP_EVENT, $data, NULL);
+
+  // This page is called by facebook, not a user's browser.  User's should never see this.
+  //print('Thanks Facebook, for your fancy API!');
+
+  // It's facebook calling us, not the user.  And fb_sig params make it look
+  // like a canvas page, but it could be connect.  So bad idea to save session.
+  session_save_session(FALSE);
+  exit();
+}
+
+
+function fb_app_get_about_url($fb_app) {
+  if ($fb_app->id)
+    return url("http://www.facebook.com/apps/application.php",
+               array('query' => array('id' => $fb_app->id)));
+}
+
+// Not currently used, AFAIK.
+function theme_fb_app($fb_app) {
+  // Get known properties
+  $props_map = fb_invoke(FB_OP_LIST_PROPERTIES, array('fb_app' => $fb_app), array());
+  $data = array(
+    t('Label') => $fb_app->label,
+    t('App ID') => $fb_app->id,
+    //t('Secret') => $fb_app->secret,
+  );
+  foreach ($props_map as $name => $key) {
+    if (isset($fb_app->$key))
+      $data[$name] = $fb_app->$key;
+  }
+
+  $output = theme('dl', $data);
+  return $output;
+}
+
+
+
+/**
+ * Implementation of hook_user.
+ */
+function fb_app_user($op, &$edit, &$account, $category = NULL) {
+  $items = array();
+  if ($op == 'view') {
+    $apps = fb_get_all_apps();
+    foreach ($apps as $fb_app) {
+      // Learn this user's FB id
+      $fbu = fb_get_fbu($account->uid, $fb_app);
+      if ($fbu) {
+        // The drupal user is a facebook user.  Now, learn more from facebook.
+        $fb = fb_api_init($fb_app);
+        if (fb_facebook_user($fb)) {
+          try {
+            $info = $fb->api(array('method' => 'users.getInfo',
+                                   'uids' => array($fbu),
+                                   'fields' => array(
+                                     'about_me',
+                                     'affiliations',
+                                     'name',
+                                     'is_app_user',
+                                     'pic_big',
+                                     'profile_update_time',
+                                     'status',
+                                   )));
+            if (isset($info) && count($info)) {
+              $output = theme('fb_app_user_info', $fb_app, $info[0]);
+
+              $items[$fb_app->label] = array(
+                '#title' => $fb_app->title,
+                '#type' => 'fieldset',
+                'value' => array('#value' => $output),
+              );
+            }
+          } catch (Exception $e) {
+            fb_log_exception($e, "Failed to get Facebook user info for account $fbu");
+          }
+        }
+      }
+    }
+    if (count($items)) {
+      $account->content['fb_app'] = $items;
+      $account->content['fb_app']['#weight'] = 6; // Appear after history (user.module)
+    }
+  }
+}
+
+function theme_fb_app_user_info($fb_app, $info) {
+  $output = '';
+  if (isset($info['pic_big']))
+    $output .= '<p><img src="'. $info['pic_big'] .'" /></p>';
+
+  $fb_link = l($info['name'], 'http://www.facebook.com/profile.php', array(
+                 'query' => 'id=' . $info['uid']));
+  if ($info['is_app_user'])
+    $output .= '<p>' .
+      t('!fb_link uses %title', array(
+          '!fb_link' => $fb_link,
+          '%title' => $fb_app->title)) .
+      '</p>';
+  else
+    $output .= '<p>'.
+      t('!fb_link does not use %title', array(
+          '!fb_link' => $fb_link,
+          '%title' => $fb_app->title)) .
+      '</p>';
+
+  return $output;
+}
+
+function fb_app_token_list($type = 'all') {
+  if ($type == 'all' || $type == 'fb' || $type == 'fb_app') {
+    $tokens['fb_app']['fb-app-label'] = t('Facebook application label');
+    $tokens['fb_app']['fb-app-url'] = t('Facebook application canvas page URL');
+    return $tokens;
+  }
+}
+
+function fb_app_token_values($type = 'all', $object = NULL) {
+  $values = array();
+  if ($type == 'fb_app' && $object) {
+    $fb_app = $object;
+    $values['fb-app-label'] = $fb_app->label;
+    $values['fb-app-url'] = fb_protocol() . '://apps.facebook.com/'. $fb_app->canvas;
+  }
+  return $values;
+}
+
+function fb_app_theme() {
+  return array(
+    'fb_app_user_info' => array(
+      'arguments' => array(
+        'fb_app' => NULL,
+        'info' => NULL,
+      ),
+    ),
+  );
+}

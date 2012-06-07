@@ -1,0 +1,12 @@
+name = FB Forms
+description = (fb_form.module) Build FBML form constructs such as <a href=http://developers.facebook.com/docs/guides/canvas/#requests target=_blank>requests</a> using Drupal's Form API.
+package = Drupal for Facebook
+dependencies[] = fb
+core = 6.x
+
+; Information added by drupal.org packaging script on 2012-04-03
+version = "6.x-3.2"
+core = "6.x"
+project = "fb"
+datestamp = "1333489846"
+

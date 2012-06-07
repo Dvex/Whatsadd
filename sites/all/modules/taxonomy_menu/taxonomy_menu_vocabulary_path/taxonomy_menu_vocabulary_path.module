@@ -1,0 +1,87 @@
+<?php
+// $Id: taxonomy_menu_vocabulary_path.module,v 1.1.2.2 2009/10/31 18:39:33 indytechcook Exp $
+/**
+* @file
+* Adds a tad extra functionality to the new Taxonomy Menu.
+*/
+
+
+/**
+* Implementation of hook_taxonomy_menu_options()
+*
+* @return array
+*  Uses the value to set the variable taxonomy_menu_<value>_$vid
+*  $options[value]
+*   default - optional.  this is what will be used if the varialbe is not set.  if empty then FALSE is used
+*   #title - required.
+*   any other form element
+*/
+function taxonomy_menu_vocabulary_path_taxonomy_menu_options() {
+  $options['taxonomy_menu_vocabulary_path'] = array(
+    '#title' => t('Custom path for vocabulary'),
+    '#description' => t('Enter the path you would like to use for this vocabulary. Only used if menu path type is "Vocabulary path".'),
+    'default' => 'category',
+    '#type' => 'textfield',
+    '#weight' => -5,
+  );
+  
+  $options['vocabulary_path_use_custom_path_for_term_menu_path'] = array(
+    '#title' => t('Use vocabulary path as base path'),
+    '#weight' => -4,
+    '#type' => 'checkbox',
+    'default' => '',
+    '#description' => t('Use the custom path for vocabulary as base path for term menu items. Only used if Menu path type is "Vocabulary path".'),
+  );
+ 
+  return $options;
+}
+
+
+/**
+* Implementation of hook_taxonomy_menu_path.
+*
+* @return array
+*  function name => Display Title
+*  a list of the path options.
+*/
+function taxonomy_menu_vocabulary_path_taxonomy_menu_path() {
+  $output = array('taxonomy_menu_vocabulary_path_path_vocab_view' => t('Vocabulary path'));
+
+  return $output;
+}
+
+/**
+* Callback for hook_taxonomy_menu_path
+*/
+function taxonomy_menu_vocabulary_path_path_vocab_view($vid, $tid) {
+  $vocab_path = variable_get('taxonomy_menu_taxonomy_menu_vocabulary_path_'. $vid, 'category');
+  
+  //if tid = 0 then we are creating the vocab menu item format will be /vocabname
+  if ($tid == 0) {
+	$path = $vocab_path;
+  }
+  else {
+    if(variable_get('taxonomy_menu_vocabulary_path_use_custom_path_for_term_menu_path_'. $vid, FALSE)){
+      $path = $vocab_path . '/' . taxonomy_get_term($tid)->name;
+    }
+    else{
+      $path = taxonomy_term_path(taxonomy_get_term($tid));
+    }
+    if (variable_get('taxonomy_menu_display_descendants_'. $vid, FALSE)) {
+      //we wait to run this instead of durning the if above
+      //because we only wan to run it once.
+      $terms = taxonomy_get_tree($vid, $tid);
+      foreach ($terms as $term) {
+        $tids[] = $term->tid;
+      }
+      if ($tids) {
+        $end = implode(' ', $tids);
+        $path .= ' '. $end;
+      }
+    }
+  }
+
+
+  return $path;
+}
+

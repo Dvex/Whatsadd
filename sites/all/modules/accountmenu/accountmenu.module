@@ -1,0 +1,216 @@
+<?php
+/**
+ * @file accountmenu.module
+ * Provide a dynamic Log in/My account/Log out account menu
+ *
+ * This module provides a dynamic menu for login, logout and access to my account page.
+ * The menu is dynamic such that when he user is not logged in, only the "Log in" link
+ * is shown. After the user has logged in, the menu change to "My account" "Log out".
+ * The "Log in" link returns to the original page from where the user originally click.
+ * This menu defaults to the menu name "Account menu". However, it can be move to
+ * any menu at admin/settings/accountmenu.
+ *
+ */
+
+
+
+function accountmenu_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case 'admin/help#accountmenu':
+      $output .= '<p>'. t('Provides a dynamic "Log in|My account|Log out" account menu') .'</p>';
+      $output .= '<p>'. t('By default, the links are under the menu "Account menu", they can be <a href="@settings">moved</a> to be part of any menu.', array('@settings' => url('admin/settings/accountmenu'))) .'</p>';
+      $output .= '<p>'. t('The Account menu links can be <a href="@customize">customized</a>, the "My account" link title can include the tokens <em>@name</em> or <em>@realname</em>, <em>@name</em> is replaced with the log in name and <em>@realname</em> is replaced with the real name if the <a href="@module-path">RealName module</a> is installed, if not, <em>@realname</em> is replace with the log in name.',
+                           array('@customize' => url('admin/build/menu-customize/'. variable_get('accountmenu_menu_name', 'accountmenu')),
+                                '@module-path' => url('http://drupal.org/project/realname', array('external' => TRUE)),
+                          )) .'</p>';
+      $output .= '<p>'. t('The Account menu links are displayed with a <a href="@block">block</a>.',
+                           array('@block' => url('admin/build/block'),
+                          )) .'</p>';
+      break;
+  }
+  return $output;
+}
+
+
+
+function accountmenu_menu() {
+  $items['admin/settings/accountmenu'] = array(
+    'title' => 'Account menu',
+    'description' => 'Configure account menu',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('accountmenu_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'accountmenu.admin.inc',
+  );
+
+  return $items;
+}
+
+
+
+function _accountmenu_reset_menu() {
+  // delete our links before making them again. we are really doing a move
+  // but there is no move api call so we delete first and re-create.
+  // !!! any menu cusgtomization made through the menu module UI are lost.
+  _accountmenu_delete_menu();
+  _accountmenu_setup_menu();
+  $t = get_t();
+  drupal_set_message($t('Account menu has been reset, any menu customization is lost and must be <a href="@customize">customized</a> again.', array('@customize' => url('admin/build/menu-customize/'. variable_get('accountmenu_menu_name', 'accountmenu')))));
+}
+
+
+
+function _accountmenu_delete_menu() {
+  $result = db_query("SELECT * FROM {menu_links} WHERE module = 'accountmenu'");
+  while ($link = db_fetch_array($result)) {
+    _menu_delete_item($link);
+  }
+}
+
+
+
+function _accountmenu_setup_menu() {
+  $item = array(
+    'link_title' => 'Log in/Create account',
+    'link_path' => 'user/login',
+    'options' => array('alter' => TRUE,
+                       'attributes' => array('title' => t('Log in, create new account or request new password.'),
+                                             'class' => 'popups-form-reload',
+                                            ),
+                       ),
+    'weight' => 0,
+    'menu_name' => variable_get('accountmenu_menu_name', 'accountmenu'),
+    'module' => 'accountmenu',
+  );
+  menu_link_save($item);
+
+  $item = array(
+    'link_title' => 'Register',
+    'link_path' => 'user/register',
+    'hidden' => 1,
+    'options' => array('alter' => TRUE,
+                       'attributes' => array('title' => t('Register a new account'),
+                                             'class' => 'popups-form-reload',
+                                            ),
+                       ),
+    'weight' => 0,
+    'menu_name' => variable_get('accountmenu_menu_name', 'accountmenu'),
+    'module' => 'accountmenu',
+  );
+  menu_link_save($item);
+
+  $item = array(
+    'link_title' => 'My account',
+    'link_path' => 'user/%',
+    'title_callback' => NULL,
+    'title_arguments' => NULL,
+    'options' => array('alter' => TRUE,
+                       'attributes' => array('title' => t('View/edit user account.'))),
+    'weight' => 0,
+    'menu_name' => variable_get('accountmenu_menu_name', 'accountmenu'),
+    'module' => 'accountmenu',
+  );
+  menu_link_save($item);
+
+  $item = array(
+    'link_title' => 'Log out',
+    'link_path' => 'logout',
+    'weight' => 1,
+    'menu_name' => variable_get('accountmenu_menu_name', 'accountmenu'),
+    'module' => 'accountmenu',
+  );
+  menu_link_save($item);
+}
+
+
+
+function _accountmenu_menu_need_destination($path) {
+  return in_array($path, array(
+                           'user/login',
+                           'user/register',
+                         ));
+}
+
+
+
+function accountmenu_translated_menu_link_alter(&$item) {
+  if ($item['module'] != 'accountmenu') {
+    return;
+  }
+  if (_accountmenu_menu_need_destination($item['link_path'])) {
+//    if (function_exists('popups_add_popups')) {
+//      popups_add_popups();
+//    }
+    if (_accountmenu_is_404() || arg(0) === 'user') {
+      // on a 404 page or any 'user' paths, send user to the front
+      $item['localized_options']['query'] = 'destination=<front>';
+    }
+    else {
+      $item['localized_options']['query'] = drupal_get_destination();
+    }
+    // potx will complain here, but line 496 of menu.inc is doing the same so
+    $item['title'] = t($item['link_title']);
+  }
+  elseif ($item['link_path'] == 'user/%') {
+    list($name, $realname) = _accountmenu_get_name_and_realname();
+    // no check_plain() here because menu display will do it
+    $item['options']['accountmenu_link_title'] = $item['link_title'];
+    // we prefer to use '@' key but retain the '!' key for backward compatibility
+    $item['title'] = $item['link_title'] = t($item['link_title'], array('@name' => $name, '@realname' => $realname));
+  }
+}
+
+
+/**
+ * Substitue tokens @name and @realname with login name and realname. @realname
+ * is same as @name if realname module is not install.
+ * @param Array $vars variables array pass in fro core
+ * @return Array two element array, element 0 is name, 1 is realname
+ */
+function accountmenu_preprocess_block(&$vars) {
+  if ('accountmenu' == $vars['block']->delta) {
+    list($name, $realname) = _accountmenu_get_name_and_realname();
+    $vars['block']->subject = t($vars['block']->subject, array('@name' => $name, '@realname' => $realname));
+  }
+}
+
+
+/**
+ * Retrieve the user's name and realname
+ * @return a two-element array, first element is the user login name, the
+           second element is user's real name if the realname module is
+           installed, if not, it's the same as the first element
+ */
+function _accountmenu_get_name_and_realname() {
+  global $user;
+
+  // initialize elements [0] and [1], the second will be set to real name if the
+  // realname module is installed
+  $result[] = $result[] = $user->name;
+  if (function_exists('realname_get_user')) {
+    $account = realname_get_user($user->uid);    // initialize realname
+    $result[1] = $account->name;
+  }
+
+  return $result;
+}
+
+
+function _accountmenu_is_404() {
+  return strpos(drupal_get_headers(), 'HTTP/1.1 404 Not Found') != FALSE;
+}
+
+
+
+/**
+ * Implementation of hook_form_alter()
+ */
+function accountmenu_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'menu_edit_item' && $form['menu']['options']['#value']['accountmenu_link_title']) {
+//    $form['menu']['description']['#default_value'] = $form['menu']['link_title']['#default_value'];
+    $form['menu']['link_title']['#default_value'] = $form['menu']['options']['#value']['accountmenu_link_title'];
+  }
+}
+

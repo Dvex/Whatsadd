@@ -1,0 +1,73 @@
+<?php
+/**
+ * @file
+ * Install functions for fb_connect.module.
+ *
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function fb_connect_uninstall() {
+  db_query("DELETE FROM {blocks} WHERE module = 'fb_connect'");
+}
+
+function fb_connect_update_6200() {
+  $items = array();
+  foreach (array('fb_connect_primary', 'fb_connect_login') as $prefix) {
+    $oldvar = $prefix . '_apikey';
+    $newvar = $prefix . '_nid';
+    // Variable fb_connect_primary_apikey is now fb_connect_primary_nid
+    if ($apikey = variable_get($oldvar, NULL)) {
+      $result = db_query("SELECT * FROM {fb_app} WHERE apikey = '%s'",
+                         $apikey);
+      $data = db_fetch_object($result);
+      if ($data->nid) {
+        variable_set($newvar, $data->nid);
+        $items[] = array(
+          'success' => TRUE,
+          'query' => "updated $newvar to be $data->label ($data->nid)");
+        variable_del($oldvar);
+      }
+      else {
+        $items[] = array(
+          'success' => FALSE,
+          'query' => "Could not find $oldvar by apikey ($apikey)");
+      }
+    }
+  }
+  return $items;
+}
+
+function fb_connect_update_6201() {
+  $items = array();
+  foreach (array('fb_connect_primary', 'fb_connect_login') as $prefix) {
+    $oldvar = $prefix . '_nid';
+    $newvar = $prefix . '_label';
+    // Variable fb_connect_primary_apikey is now fb_connect_primary_nid
+    if ($old = variable_get($oldvar, NULL)) {
+      $result = db_query("SELECT * FROM {fb_app} WHERE nid = %d",
+                $old);
+      $data = db_fetch_object($result);
+      if ($data->label) {
+        variable_set($newvar, $data->label);
+        $items[] = array(
+          'success' => TRUE,
+          'query' => "updated $newvar to be $data->label");
+        variable_del($oldvar);
+      }
+      else {
+        $items[] = array(
+          'success' => FALSE,
+          'query' => "Could not find $oldvar by nid ($old)");
+      }
+    }
+  }
+  return $items;
+}
+
+function fb_connect_update_6202() {
+  $items = array();
+  drupal_set_message(t("IMPORTANT: further action required!  Manually edit your Facebook Connect application(s).  The callback URL format has changed, and settings must be updated on facebook.  Saving your settings locally will update the remote settings (by default)."), 'warning');
+  return $items;
+}

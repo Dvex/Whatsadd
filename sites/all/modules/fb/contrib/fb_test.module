@@ -1,0 +1,199 @@
+<?php
+/**
+ * @file
+ *
+ * http://developers.facebook.com/docs/test_users
+ */
+
+function fb_test_menu() {
+
+  // Admin pages
+  // Register Users config page.
+  $items[FB_PATH_ADMIN_APPS . '/%fb/fb_test'] = array(
+    'title' => 'Test Accounts',
+    'page callback' => 'fb_test_detail_page',
+    'page arguments' => array(FB_PATH_ADMIN_APPS_ARGS),
+    'access arguments' => array(FB_PERM_ADMINISTER),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+function fb_test_detail_page($fb_app) {
+  $output = drupal_get_form('fb_test_create_form', $fb_app);
+  $output .= drupal_get_form('fb_test_accounts_form', $fb_app);
+  return $output;
+}
+
+function fb_test_create_form($form_state, $fb_app) {
+  $form['#fb_app'] = $fb_app;
+
+  // @TODO make this a dropdown, limit to 50 total test accounts.
+  $form['how_many'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Number of test accounts to create'),
+  );
+
+  $form['installed'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Installed'),
+    '#description' => t('If selected, new users have already authorized the application'),
+  );
+
+  // Which permissions?
+  $perms = array();
+  drupal_alter('fb_required_perms', $perms); // @TODO pass fb_app to this function.
+  if (count($perms)) {
+    $default_perms = implode(',', $perms);
+  }
+
+  $form['perms'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Extended Permission'),
+    '#description' => t('If app is authorized, users have granted these permissions.'),
+    '#default_value' => $default_perms,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Create Test Accounts'),
+  );
+  return $form;
+}
+
+function fb_test_create_form_submit($form, &$form_state) {
+  $values = $form_state['values'];
+  $fb_app = $form['#fb_app'];
+  try {
+    $fb = fb_api_init($fb_app);
+
+    for ($i = 0; $i < $values['how_many']; $i++) {
+      $result = $fb->api($fb_app->id . "/accounts/test-users", 'POST', array(
+                           'installed' => $values['installed'],
+                           'permissions' => $values['perms'],
+                           'access_token' => fb_get_token($fb),
+                         ));
+    }
+    drupal_set_message(t('Created %num test accounts.', array('%num' => $values['how_many'])));
+  }
+  catch (Exception $e) {
+    fb_log_exception($e, t('Failed to create test accounts.'));
+  }
+}
+
+function fb_test_accounts_form($form_state, $fb_app) {
+  try {
+    $form['#fb_app'] = $fb_app;
+    $fb = fb_api_init($fb_app);
+
+    $result = $fb->api($fb_app->id . "/accounts/test-users", 'GET', array(
+                         'access_token' => fb_get_token($fb),
+                       ));
+
+    foreach ($result['data'] as $test_account) {
+      $form['#fb_test_accounts'][$test_account['id']] = $test_account;
+
+      $markup = "$test_account[id] <a href=$test_account[login_url] target=_blank>(login)</a>";
+      if (isset($test_account['access_token'])) {
+        $data = $fb->api($test_account['id'], 'GET', array(
+                           'access_token' => $test_account['access_token'], // Only when account is authorized
+                         ));
+        if ($data['name']) {
+          $markup .= " $data[name] <a href=$data[link]>(profile)</a> ";
+        }
+      }
+
+      $options[$test_account['id']] = $markup;
+    }
+    if (!empty($options)) {
+      $form['checkboxes'] = array(
+        '#type' => 'checkboxes',
+        '#options' => $options,
+      );
+    }
+
+    $form['operation'] = array(
+      '#type' => 'select',
+      '#title' => t('With selected...'),
+      '#options' => array(
+        'none' => t('please select...'),
+        'friends' => t('make friends'),
+        'delete' => t('delete account'),
+      ),
+      '#description' => t('Use caution, there will be no confirmation page.'),
+    );
+
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Submit'),
+    );
+
+    $form['header'] = array(
+      '#type' => "markup",
+      '#value' => "<p>Test Accounts</p>",
+      '#weight' => -10,
+    );
+  }
+  catch (Exception $e) {
+    fb_log_exception($e, t('Failed to access test accounts.'));
+  }
+  return $form;
+}
+
+function fb_test_accounts_form_submit($form, &$form_state) {
+  $values = $form_state['values'];
+  $fb_app = $form['#fb_app'];
+  $fb = fb_api_init($fb_app);
+
+  try {
+    if ($values['operation'] == 'friends') {
+      foreach ($values['checkboxes'] as $fbu => $selected) {
+        if ($selected && isset($form['#fb_test_accounts'][$fbu]['access_token'])) {
+          foreach ($values['checkboxes'] as $fbu2 => $selected2) {
+            if ($selected2 && ($fbu != $fbu2)) {
+              try {
+                $result = $fb->api("$fbu/friends/{$fbu2}", "POST", array(
+                                     'access_token' => $form['#fb_test_accounts'][$fbu]['access_token'],
+                                   ));
+                if ($result) {
+                  drupal_set_message(t("User %fbu is friends with $fbu2.", array(
+                                         '%fbu' => $fbu,
+                                         '%fbu2' => $fbu2,
+                                       )));
+                }
+              }
+              catch (Exception $e) {
+                $message = t("Failed to create friendship between %fbu and %fbu2.", array(
+                               '%fbu' => $fbu,
+                               '%fbu2' => $fbu2,
+                             ));
+                fb_log_exception($e, $message);
+              }
+            }
+          }
+        }
+      }
+    }
+    elseif ($values['operation'] == 'delete') {
+      foreach ($values['checkboxes'] as $fbu => $selected) {
+        if ($selected) {
+          $result = $fb->api($fbu, 'DELETE', array('access_token' => fb_get_token($fb)));
+          if ($result) {
+            drupal_set_message(t('Deleted test account %fbu', array(
+                                   '%fbu' => $fbu,
+                                 )));
+          }
+        }
+      }
+    }
+    else {
+      if (function_exists('dpm')) {
+        dpm("Operation $values[operation] not implemented.", __FUNCTION__);
+      }
+    }
+  }
+  catch (Exception $e) {
+    fb_log_exception($e, t('Failed to perform operation.'));
+  }
+}

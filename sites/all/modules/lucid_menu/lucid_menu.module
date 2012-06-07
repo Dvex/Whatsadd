@@ -1,0 +1,389 @@
+<?php
+ /*
+ * Allow advanced javascript menu manupulations. I've used dhtml_menu as a starting point, thanks merlinofchaos
+ */
+
+define("LUCID_HORIZONTAL", 1);
+define("LUCID_VERTICAL", 2);
+define("LUCID_NAV_BAR", 3);
+
+define("LUCID_SLOW", 1);
+define("LUCID_NORMAL", 2);
+define("LUCID_FAST", 3);
+
+function lucid_menu_perm()
+{
+	return array('administer lucid menu');
+}
+
+
+
+function lucid_menu_block($op = 'list', $delta = 0, $edit = array())
+{
+
+global $theme;
+	if ($op == 'list') 
+	{
+		$blocks = array();
+		$root_menus = menu_get_menus();
+		foreach ($root_menus as $mid => $title) {
+			$blocks[$mid]['info'] = t('Lucid: ') .$title ." ($mid)";
+		}
+		
+		return $blocks;
+	}
+	
+	else if ($op == 'view') 
+	{
+		$path = drupal_get_path('module', 'lucid_menu');
+		
+		if (variable_get('lucid_hover', 1))
+			drupal_add_js("$path/superfish/js/hoverIntent.js");
+			
+		  $bgIframe = '';
+                      if (variable_get('lucid_bgiframe', 1)) {
+                        $bgIframe = ".find('ul').bgIframe({opacity:false})";
+                        drupal_add_js("$path/superfish/js/jquery.bgiframe.min.js");
+                      }
+		
+		drupal_add_js("$path/superfish/js/superfish.js");
+		
+		$block_settings = variable_get("lucid_menu_$delta", '');
+		
+		if (!empty($block_settings))
+			$block_settings = unserialize($block_settings);
+
+		$speed = $block_settings['speed'] == LUCID_SLOW ? 'slow' : ($block_settings['speed'] == LUCID_NORMAL ? 'normal' : 'fast');
+		$auto_arrows = $block_settings['auto_arrows'] ? 'true' : 'false';
+		$drop_shadows = $block_settings['drop_shadows'] ? 'true' : 'false';
+		$disable_hi = $block_settings['disable_hi'] ? 'true' : 'false';
+		$animation = $block_settings['animation'] ? $block_settings['animation'] : "height: 'show'";
+		$time_to_close = $block_settings['time_to_close'] ? $block_settings['time_to_close'] : 800;
+		$hover_class = $block_settings['hover_class'] ? $block_settings['hover_class'] : 'sfHover';
+		$active_trail_class = $block_settings['active_trail_class'] ? $block_settings['active_trail_class'] : 'active_trail';
+		$init = $block_settings['init'];
+		$before_show = $block_settings['before_show'];
+		$show = $block_settings['show'];
+		$hide = $block_settings['hide'];
+		$path_levels = $block_settings['path_levels'] ? $block_settings['path_levels'] : 0;
+		
+		if ($path_levels == 0) // just using the defaults
+		{
+			$active_trail_class = 'overideThisToUse';
+			$path_levels = 1;
+		}
+		
+		$menu_specific_settings = <<<start
+$(document).ready(function()
+{ 
+		$("ul.sf-menu-{$delta}").superfish
+		({
+    hoverClass:    '$hover_class',         // the class applied to hovered list items 
+    pathClass:     '$active_trail_class',  // the class you have applied to list items that lead to the current page 
+    pathLevels:    $path_levels,                      // the number of levels of submenus that remain open or are restored using pathClass 
+    delay:         $time_to_close,         // the delay in milliseconds that the mouse can remain outside a submenu without it closing 
+    animation:     {{$animation}},         // an object equivalent to first parameter of jQuery's .animate() method
+    speed:         '$speed',		       // speed of the animation. Equivalent to second parameter of jQuery's .animate() method
+    autoArrows:	   $auto_arrows,	       // if true, arrow mark-up generated automatically = cleaner source code at expense of initialisation performance.
+    dropShadows:   $drop_shadows,	       // completely disable drop shadows if this is set to true.
+    disableHI:	   $disable_hi,		       // set to true to disable hoverIntent detection.
+    onInit:        function(){{$init}(this)},           // callback function fires once Superfish is initialised - 'this' is the containing ul 
+    onBeforeShow:  function(){{$before_show}(this)},    // callback function fires just before reveal animation begins - 'this' is the ul about to open 
+    onShow:        function(){{$show}(this)},           // callback function fires once reveal animation completed - 'this' is the opened ul 
+    onHide:        function(){{$hide}(this)}            // callback function fires after a sub-menu has closed - 'this' is the ul that just closed 
+		}){$bgIframe};
+});
+start;
+		
+		drupal_add_js($menu_specific_settings, 'inline', 'header');
+
+
+
+  $theme_path = drupal_get_path('theme', $theme);
+
+		if (file_exists($theme_path."/superfish-{$delta}.css"))
+			drupal_add_css($theme_path."/superfish-{$delta}.css");
+		else if (file_exists($theme_path."/superfish.css"))
+			drupal_add_css($theme_path."/superfish.css");
+		else
+			drupal_add_css("$path/superfish/css/superfish.css");
+		
+		if ($block_settings['style'] == LUCID_VERTICAL)
+		{
+			if (file_exists($theme_path."/superfish-vertical-{$delta}.css"))
+				drupal_add_css($theme_path."/superfish-vertical-{$delta}.css");
+			else if (file_exists($theme_path."/superfish-vertical.css"))
+				drupal_add_css($theme_path."/superfish-vertical.css");
+			else
+				drupal_add_css("$path/superfish/css/superfish-vertical.css");
+		}
+			
+		if ($block_settings['style'] == LUCID_NAV_BAR)
+		{
+			if (file_exists($theme_path."/superfish-navbar-{$delta}.css"))
+				drupal_add_css($theme_path."/superfish-navbar-{$delta}.css");
+			else if (file_exists($theme_path."/superfish-navbar.css"))
+				drupal_add_css($theme_path."/superfish-navbar.css");
+			else
+				drupal_add_css("$path/superfish/css/superfish-navbar.css");
+		}
+		
+		drupal_add_css("$path/lucid_menu.css");
+		
+		$item = menu_get_item($delta);
+    	$data['subject'] = check_plain($item['title']);
+    	$data['content'] = theme('lucid_menu_tree_root', $delta, $block_settings['style']);
+    	return $data;
+	}
+	else if ($op == 'configure')
+	{
+		$values = variable_get("lucid_menu_$delta", '');
+		
+		if (!empty($values))
+			$values = unserialize($values);
+		
+		$form['style'] = array(
+			'#type' => 'select',
+			'#title' => t('Please choose the desired menu style'),
+			'#default_value' => $values['style'] ? $values['style'] : LUCID_HORIZONTAL,
+			'#options' => array (
+				LUCID_HORIZONTAL => t('Horizontal'),
+				LUCID_VERTICAL => t('Vertical'),
+				LUCID_NAV_BAR => t('Navigation Bar')
+			),
+		);
+		
+		$form['auto_arrows'] = array(
+		  '#type' => 'checkbox',
+		  '#title' => t('Auto Arrows'),
+		  '#description' => t('if checked, arrow mark-up generated automatically = cleaner source code at expense of initialisation performance.'),
+		  '#default_value' => isset($values['auto_arrows']) ? $values['auto_arrows'] : 1,
+		);
+		
+		$form['drop_shadows'] = array(
+		  '#type' => 'checkbox',
+		  '#title' => t('Drop Shadows'),
+		  '#description' => t('completely disable drop shadows by unchecking this.'),
+		  '#default_value' => isset($values['drop_shadows']) ? $values['drop_shadows'] : 1,
+		);
+		
+		$form['disable_hi'] = array(
+		  '#type' => 'checkbox',
+		  '#title' => t('Disable HI'),
+		  '#description' => t('check to disable hoverIntent detection.'),
+		  '#default_value' => isset($values['disable_hi']) ? $values['disable_hi'] : 0,
+		);
+		
+		$form['speed'] = array(
+			'#type' => 'select',
+			'#title' => t('Please choose desired animation speed'),
+			'#description' => t("speed of the animation. Equivalent to second parameter of jQuery's .animate() method"),
+			'#default_value' => $values['speed'] ? $values['speed'] : LUCID_NORMAL,
+			'#options' => array (
+				LUCID_SLOW => t('Slow'),
+				LUCID_NORMAL => t('Normal'),
+				LUCID_FAST => t('Fast')
+			),
+		);
+		
+		$form['time_to_close'] = array(
+			'#type' => 'textfield',
+			'#title' => t('Popup delay (milliseconds)'),
+			'#description' => t('The time before a popup closes when cursor is outside it.'),
+			'#default_value' => $values['time_to_close'] ? $values['time_to_close'] : 800
+		);
+		
+		$form['hover_class'] = array(
+			'#type' => 'textfield',
+			'#title' => t('Hover class'),
+			'#description' => t('Class created for hovered over items.'),
+			'#default_value' => $values['hover_class'] ? $values['hover_class'] : 'sfHover'
+		);
+		
+		$form['active_trail_class'] = array(
+			'#type' => 'textfield',
+			'#title' => t('Active trail class'),
+			'#description' => t('Class assigned to active trail menu items.'),
+			'#default_value' => $values['active_trail_class'] ? $values['active_trail_class'] : 'active_trail'
+		);
+		
+		$form['path_levels'] = array(
+			'#type' => 'textfield',
+			'#title' => t('Path levels'),
+			'#description' => t('Number of levels of popup to keep open (0) disables it.'),
+			'#default_value' => $values['path_levels'] ? $values['path_levels'] : 0
+		);	
+		
+		$form['animation'] = array(
+			'#type' => 'textfield',
+			'#title' => t('Animation (advanced)'),
+			'#description' => t('This determines the animation and is the focal point for this module. Try opacity: \'show\' or mix animations as you like.'),
+			'#default_value' => $values['animation'] ? $values['animation'] : "height: 'show'"
+		);
+		
+		$form['init'] = array(
+			'#type' => 'textfield',
+			'#title' => t('Init function (advanced)'),
+			'#description' => t('Function to be called on menu initialization, will be passed the surrounding ul. DO NOT include braces () in the function name!'),
+			'#default_value' => $values['init'] ? $values['init'] : ''
+		);
+		
+		$form['before_show'] = array(
+			'#type' => 'textfield',
+			'#title' => t('Before show function (advanced)'),
+			'#description' => t('Function to be called before a popup animation starts, will be passed the ul about to show up. DO NOT include braces () in the function name!'),
+			'#default_value' => $values['before_show'] ? $values['before_show'] : ''
+		);
+		
+		$form['show'] = array(
+			'#type' => 'textfield',
+			'#title' => t('Show function (advanced)'),
+			'#description' => t('Function to be called after a popup animation starts, will be passed the ul that became visible. DO NOT include braces () in the function name!'),
+			'#default_value' => $values['show'] ? $values['show'] : ''
+		);
+		
+		$form['hide'] = array(
+			'#type' => 'textfield',
+			'#title' => t('Hide function (advanced)'),
+			'#description' => t('Function to be called after a popup fades, will be passed the ul that just closed. DO NOT include braces () in the function name!'),
+			'#default_value' => $values['hide'] ? $values['hide'] : ''
+		);
+		
+		return $form;
+	}
+	else if ($op == 'save')
+		variable_set("lucid_menu_$delta", serialize($edit));
+}
+
+/**
+ * Implementation of hook_menu().
+ *
+ */
+function lucid_menu_menu()
+{
+
+      $items = array();
+      $items['admin/settings/lucid_menu'] = array(
+	'title' => t('Lucid Menu'),
+	'description' => t('Controls lucid menu global settings').'.',
+	'page callback' => 'drupal_get_form',
+	'page arguments' => array('lucid_settings'),
+	'access arguments' => array('administer lucid menu'),
+	'type' => MENU_NORMAL_ITEM,
+      );
+      return $items;
+}
+
+
+function lucid_settings()
+{
+	$form = array();
+	
+	$form['lucid_hover'] = array(
+	  '#type' => 'checkbox',
+	  '#title' => t('Enable hoverIntent'),
+	  '#description' => l('Click here for more info.', 'http://cherne.net/brian/resources/jquery.hoverIntent.html', array(), NULL, NULL, TRUE, FALSE),
+	  '#default_value' => variable_get('lucid_hover', 1),
+	);
+	
+	$form['lucid_bgiframe'] = array(
+	  '#type' => 'checkbox',
+	  '#title' => t('Enable bgIframe'),
+	  '#description' => l('Click here for more info.', 'http://brandonaaron.net/jquery/plugins/bgiframe/docs/', array(), NULL, NULL, TRUE, FALSE),
+	  '#default_value' => variable_get('lucid_bgiframe', 1),
+	);
+	
+	return system_settings_form($form);
+}
+
+function lucid_menu_theme(){
+  return array(
+	  'lucid_menu_item' => array(
+	      'arguments' =>
+			    array(
+				'mid' => NULL,
+				'children' => NULL,
+				),
+	    ),
+	  'lucid_menu_tree_root' => array(
+	      'arguments' =>
+			    array(
+				'pid' => NULL,
+				'style' => NULL,
+				),
+	    ),
+	  'lucid_menu_tree' => array(
+	      'arguments' =>
+			    array(
+				'pid' => NULL,
+				),
+	    ),
+
+  );
+  
+}
+
+function lucid_menu_tree($tree) {
+
+  global $language;
+  // Leave only current language menus and language neutral menus
+  $current_language = $language->language;
+  if ( ! empty($tree) ) {
+    foreach ( $tree as $menu_key => $menu_link ) {
+          if ( $menu_link['link']['options']['langcode'] != $current_language &&
+               ! empty( $menu_link['link']['options']['langcode'] ) ) {
+            unset( $tree[$menu_key] ) ;
+          }
+    }
+  }
+
+  foreach ($tree as $i => $data) {
+    //print_r($data);
+    if ($data['link']['hidden'] == 0){
+    $childe ='';
+    if ($data['below']){
+      $childe = lucid_menu_tree($data['below']);
+    }
+    $link = theme('menu_item_link', $data['link']);
+    $output .= theme('lucid_menu_item', $link,$childe);
+    }
+  }
+
+//print_r($tree);
+//die();
+ 
+  return $output;
+}
+
+function theme_lucid_menu_tree_root($pid = 1, $style = LUCID_HORIZONTAL) {
+	$string = '';
+	//die($pid);
+	if ($style == LUCID_VERTICAL)
+		 $string = ' sf-vertical';
+	else if ($style == LUCID_NAV_BAR)
+		$string = ' sf-navbar';
+		
+
+$tree = theme('lucid_menu_tree',$pid);
+     return "<ul class='sf-menu sf-menu-{$pid} $string'>". $tree ."</ul>";
+  
+}
+
+function theme_lucid_menu_tree($pid = 1) {
+  $tree = menu_tree_all_data($pid);
+  if ($tree = lucid_menu_tree($tree)) {
+    return  $tree ;
+  }
+}
+
+function theme_lucid_menu_item($mid,$children='') {
+  $menu.='<li>';
+  $menu.=$mid;
+  if ($children != ''){
+  $menu.="<ul>";
+  $menu.=$children;
+  $menu.="</ul>";
+  }
+  $menu.="</li>";
+  return $menu;
+}

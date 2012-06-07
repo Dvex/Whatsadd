@@ -1,0 +1,105 @@
+<?php
+/**
+ * @file
+ * Installs database tables and settings required by fb_friend module.
+ *
+ */
+
+/**
+ * hook_install()
+ */
+function fb_friend_install() {
+  // Create tables.
+  drupal_install_schema('fb_friend');
+
+  drupal_set_message(st('Facebook Friend module installed.', array('!perm' => url('admin/user/permissions'), '!create' => url('admin/build/fb') /* FB_PATH_ADMIN */)));
+}
+
+/**
+ * hook_uninstall()
+ */
+function fb_friend_uninstall() {
+  // Remove tables.
+  drupal_uninstall_schema('fb_friend');
+
+  db_query("DELETE FROM {blocks} WHERE module = 'fb_friend'");
+}
+
+function fb_friend_schema() {
+  $schema['fb_friend'] = array(
+    'description' => 'Main fb_friend table.  Stores friend to friend interaction in a generic way. For example, that Joe invited Sally to visit node/42, but not limited to just invitations.',
+    'fields' => array(
+      'fb_friend_id' => array(
+        'description' => 'The primary identifier.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'module' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Textual id for type of interaction represented by this row.',
+      ),
+      'ref_id' => array(
+        'description' => 'Reference to another entity. i.e. node, user, etc',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0),
+      'label' => array( /* Would it be better to store id? */
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Unique textual id for app. See fb_app table.',
+      ),
+      'fbu_actor' => array(
+        'description' => 'For example the user who sent an invitation.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'fbu_target' => array(
+        'description' => 'For example the user being invited.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => 'For invitations, 1=active, 2=accepted.',
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the row was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'description' => 'serialized generic data.',
+        'default' => NULL,
+      ),
+    ),
+    'primary key' => array('fb_friend_id'),
+    'indexes' => array(
+      'fb_friend_fbu_actor' => array('fbu_actor'),
+      'fb_friend_fbu_target' => array('fbu_target'),
+      'fb_friend_module' => array('module'),
+      'fb_friend_module_ref_id' => array('module', 'ref_id'),
+      'fb_friend_label' => array('label'),
+    ),
+  );
+
+  return $schema;
+}
+
+function fb_friend_update_6300() {
+  $ret = array();
+  // introducing fb_friend table.
+  $schema = fb_friend_schema();
+  db_create_table($ret, 'fb_friend', $schema['fb_friend']);
+  return $ret;
+}

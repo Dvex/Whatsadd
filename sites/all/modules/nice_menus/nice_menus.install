@@ -1,0 +1,28 @@
+<?php
+// $Id: nice_menus.install,v 1.3 2009/03/24 16:22:28 add1sun Exp $
+
+/**
+ * @file
+ *  Update functions for Nice menus.
+ */
+
+/**
+ * Implementation of hook_update_N().
+ */
+function nice_menus_update_6000() {
+  // Existing blocks need to be set to no caching.
+  $ret = array();
+  $ret[] = update_sql("UPDATE {blocks} SET cache = -1 WHERE module = 'nice_menus'");
+  return $ret;
+}
+
+/**
+ * Implementation of hook_update_N().
+ */
+function nice_menus_update_6001() {
+  // Switch the JS toggle variable name.
+  $old_setting = variable_get('nice_menus_ie', 1);
+  variable_set('nice_menus_js', $old_setting);
+  variable_del('nice_menus_ie');
+  return array();
+}

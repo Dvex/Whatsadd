@@ -1,0 +1,9 @@
+.block-lucid_menu ul {
+	margin:0;
+	padding:0 0 0 0;
+}
+
+.sf-menu,
+.sf-menu * {
+z-index: 1000 ; /* ie6 and ie7 z-index bug fix, maintains the menu drop downs above any other positioned elements */
+}

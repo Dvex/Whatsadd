@@ -1,0 +1,1467 @@
+/* $Id: grunge-style.css,v 1.1.2.1 2010/09/17 00:16:18 atelier Exp $ */
+
+/* Basic Typography & Colors
+-------------------------------------------------------------- */
+/* Add general site styling here for typography and background */
+html {
+	overflow-y: scroll; /* always show FF scroll bars */
+}
+
+body {
+  font-size: 75%;   /* also set in fusion_starter.info: settings[base-font-size] = font-size-12 */
+  background: url(../images/wood.jpg) repeat-x scroll 0 0 #110302;
+  color: #3F310C;
+}
+
+/* Default link styles - separate a:visited for a different visited link style */
+a,
+a:link,
+a:visited {
+	outline: none;
+  text-decoration: none;
+  color: #A46923;
+}
+
+/* Hover/active link styles. Don't forget :focus for accessibility */
+a:hover,
+a:focus {
+	text-decoration: underline;
+}
+
+a:active {
+}
+
+@font-face {
+	font-family: Bebas;
+  src: url(../fonts/Bebas.eot);
+}
+
+@font-face {
+	font-family: "Bebas";
+  src: local("Bebas"), url(../fonts/Bebas.ttf) format("truetype");
+}
+
+
+/* General Resets/Overrides
+-------------------------------------------------------------- */
+.block {
+	margin-bottom: 2em;
+}
+
+
+/* Specific Typography
+-------------------------------------------------------------- */
+#site-name {
+  font-size: 300%;
+  line-height: 150%;
+}
+
+.footer-message {
+  font-size: 90%;
+}
+
+
+/* HTML Elements
+-------------------------------------------------------------- */
+body {
+}
+
+/* Site Info
+-------------------------------------------------------------- */
+/* Wrapper around logo, site name, and slogan */
+.header-site-info span {
+  display: block;
+}
+
+/* Add float here to put logo and site name side by side, also add margins as
+  needed */
+#logo {
+	position: relative;
+  z-index: 10;
+  width: 460px;
+  display: inline;
+}
+
+/* Link and hover styles for site name */
+#site-name a:link,
+#site-name a:visited,
+#site-name a:hover,
+#site-name a:active {
+}
+
+/* Typography for site slogan */
+#slogan {
+}
+
+/* General Layout
+-------------------------------------------------------------- */
+.topline {
+  height: 3px;
+  padding: 5px 0;
+  position: relative;
+  width: 100%;
+  z-index: 2;
+  background: url(../images/template.png) repeat-x scroll 0 3px #507E83;
+}
+
+#rt-top {
+	background: #507E83;
+}
+
+.rt-container {
+	background: none;
+}
+
+.topcuts {
+  height: 10px;
+  position: relative;
+  width: 100%;
+  z-index: 1;
+  background: url(../images/template.png) 0 -40px repeat-x;
+}
+
+.bottomtopper {
+	height: 8px;
+  position: relative;
+  width: 100%;
+  background: url(../images/template.png) repeat-x scroll 0 0 transparent;
+}
+
+
+/* Regions
+
+  Classes (.region-name) should always be used instead of IDs (#region-name) so
+  that Skinr styles can override them with a class later
+-------------------------------------------------------------- */
+
+/* All Regions
+-------------------------------------------------------------- */
+/* By default this wrapper is set to 100% width and centered -- override here to
+  narrow wrapper or align left or right */
+.page {
+}
+
+/* The 0 values here remove padding and spacing at the bottom of the page.
+  Remove to add a gap at the very bottom of the page */
+.page-inner {
+  border: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+
+/* Header Regions
+-------------------------------------------------------------- */
+/* Header Top region to the bottom of Header region */
+/* For full-width header background, add background image/color here */
+.header-group-wrapper {
+}
+
+#header-group-wrapper {
+	min-height: 120px;
+}
+
+.header-group {
+}
+
+#header-group-inner .block,
+div#header-top.block {
+	margin: 0;
+}
+
+#header-group-inner div.block {
+  overflow: visible;
+}
+
+/* Header Top region which sits above the header */
+/* Works well with inline login or inline menu block style */
+.header-top-wrapper {
+}
+
+.header-top {
+	width: 460px;
+  float: right;
+  position: relative;
+  display: inline;
+}
+
+.header-top-inner {
+	height: 24px;
+  float: right;
+  color: #E0EEEF;
+  font-size: 120%;
+  padding-top: 5px;
+}
+
+.header-top-inner div {
+	width: inherit;
+}
+
+.branding-wrapper {
+	height: 30px;
+  background: #507E83;
+}
+
+.branding-inner {
+	width: 960px;
+  margin: 0 auto;
+}
+
+
+/* General Menu
+/-------------------------------------------------------------- */
+.block ul.menu {
+	margin: 0;
+}
+
+.sidebar-first .block .inner,
+.sidebar-last .block .inner {
+	padding: 1px; /* fixes bottom-border alignment in FF */
+}
+
+ul.menu li {
+	background: url(../images/buttons.png) no-repeat scroll -436px 6px transparent;
+  border-bottom: 1px dashed #7E6248;
+  list-style: none;
+  font-family: Georgia, serif;
+}
+
+ul.menu li li {
+	border: none;
+  font-size: 95%;
+}
+
+ul.menu a {
+	display: block;
+  font-size: 120%;
+  font-weight: normal;
+  overflow: hidden;
+  padding: 4px 0 6px 20px;
+  text-indent: 0;
+  text-decoration: none;
+  outline: none;
+  text-transform: uppercase;
+  color: #383020;
+  line-height: 1.8em;
+}
+
+ul.menu li.active-trail > a {
+	color: #FFF;
+}
+
+ul.menu a:hover { 
+	color: #9F783B;
+}
+
+ul.menu ul {
+	border-top: 1px dashed #7E6248;
+  padding: 5px 0 5px 25px;
+}
+
+ul.menu ul ul {
+	border-top: none;
+  padding:0 0 0 25px;
+}
+
+
+/* Primary Menu
+/-------------------------------------------------------------- */
+/* Add general styles for primary menu here, such as typography, borders, floats,
+  or spacing above/below */
+#primary-menu {
+	width: 100%;
+  background: url(../images/headerbg.png) repeat scroll 0 0 transparent;
+  height: 38px;
+  z-index: 1;
+}
+
+#primary-menu.block {
+	margin: 0;
+}
+
+#primary-menu-inner {
+	margin: 0 auto;
+  width: 960px;
+  z-index: 2;
+  height: 38px;
+}
+
+#primary-menu-inner ul.menu,
+#primary-menu-inner ul.menu * {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+#primary-menu-inner ul.menu {
+	line-height: 1.0;
+}
+
+#primary-menu-inner ul.menu {
+	float: right;
+  margin-right: 10px;
+}
+
+#primary-menu-inner ul.menu ul {
+	position: absolute;
+	top: -999em;
+	width: 170px; /* left offset of submenus need to match (see below) */
+}
+
+#primary-menu-inner ul.menu ul li {
+	width: 100%;
+}
+
+#primary-menu-inner ul.menu li:hover {
+	visibility: inherit; /* fixes IE7 'sticky bug' */
+}
+
+#primary-menu-inner ul.menu li {
+	float: left;
+	position: relative;
+}
+
+#primary-menu-inner ul.menu a {
+	display: block;
+	position: relative;
+}
+
+#primary-menu-inner ul.menu li:hover ul,
+#primary-menu-inner ul.menu li.sfHover ul {
+	left: 0;
+	top: 36px; /* match top ul list item height */
+	z-index: 99;
+}
+
+#primary-menu-inner ul.menu li:hover li ul,
+#primary-menu-inner ul.menu li.sfHover li ul {
+	top: -999em;
+}
+
+#primary-menu-inner ul.menu li li:hover ul,
+#primary-menu-inner ul.menu li li.sfHover ul {
+	left: 170px; /* match ul width */
+	top: 0;
+}
+
+#primary-menu-inner ul.menu li li:hover li ul,
+#primary-menu-inner ul.menu li li.sfHover li ul {
+	top: -999em;
+}
+
+#primary-menu-inner ul.menu li li li:hover ul,
+#primary-menu-inner ul.menu li li li.sfHover ul {
+	left: 170px; /* match ul width */
+	top: 0;
+}
+
+/*** Skin ***/
+#primary-menu-inner ul.menu a {
+	background: url(../images/arrow-on.png) 9px 50% no-repeat;
+  font-size: 15px;
+  padding: 4px 12px 5px 21px;
+	text-decoration: none;
+  text-transform: uppercase;
+}
+
+#primary-menu-inner ul.menu a,
+#primary-menu-inner ul.menu a:visited  { /* visited pseudo selector so IE6 applies text colour*/
+  color: #FFF;
+  font-family: 'Bebas', Arial, Helvetica, sans-serif;
+}
+
+#primary-menu-inner ul.menu li {
+  padding: 1px;
+  border: none;
+}
+
+#primary-menu-inner ul.menu li.active-trail,
+#primary-menu-inner ul.menu li:hover,
+#primary-menu-inner ul.menu li.sfHover {
+  padding: 0;
+  border: 1px solid #000;
+}
+
+#primary-menu-inner ul.menu li.active-trail li,
+#primary-menu-inner ul.menu li:hover li,
+#primary-menu-inner ul.menu li.sfHover li {
+  border: none;
+  border-bottom: 1px dashed #000;
+}
+
+#primary-menu-inner ul.menu li ul {
+	border: 1px solid #000;
+  background-color: #47270A;
+  margin-left: -1px;
+}
+
+#primary-menu-inner ul.menu li ul ul {
+  margin-top: -1px;
+  margin-left: 0;
+}
+
+#primary-menu-inner ul.menu li li {
+  padding: 0;
+  border: none;
+  border-bottom: 1px dashed #000;
+}
+
+#primary-menu-inner ul.menu li li.last {
+  border: none;
+}
+
+#primary-menu-inner ul.menu li:hover a,
+#primary-menu-inner ul.menu li.sfHover a {
+  background: url(../images/arrow-down.png) 9px 50% no-repeat #53300C;
+}
+
+#primary-menu-inner ul.menu li:hover li:hover a,
+#primary-menu-inner ul.menu li.sfHover li.sfHover a,
+#primary-menu-inner ul.menu li:hover li:hover li:hover a,
+#primary-menu-inner ul.menu li.sfHover li.sfHover li.sfHover a {
+	background: url(../images/arrow-down.png) 9px 50% no-repeat #47270A;
+}
+
+#primary-menu-inner ul.menu a.active,
+#primary-menu-inner ul.menu a:hover,
+#primary-menu-inner ul.menu li:hover li a,
+#primary-menu-inner ul.menu li.sfhover li a,
+#primary-menu-inner ul.menu li:hover li:hover li a,
+#primary-menu-inner ul.menu li.sfHover li.sfHover li a {
+	background: url(../images/arrow-on.png) 9px 50% no-repeat #53300C;
+}
+
+/*** shadows for all but IE6 (uncomment below to enable) ***/
+/*#primary-menu-inner .sf-shadow ul {
+	background:	url(../images/shadow.png) no-repeat bottom right;
+	padding: 0 8px 9px 0;
+	-moz-border-radius-bottomleft: 17px;
+	-moz-border-radius-topright: 17px;
+	-webkit-border-top-right-radius: 17px;
+	-webkit-border-bottom-left-radius: 17px;
+}*/
+
+/*#primary-menu-inner .sf-shadow ul.sf-shadow-off {
+	background: transparent;
+}*/
+/*** end shadows ***/
+
+/*** arrows ***/
+ul.menu a.sf-with-ul {
+	padding-right: 2.25em;
+	min-width: 1px; /* trigger IE7 hasLayout so spans position accurately */
+}
+
+.sf-sub-indicator {
+	position: absolute;
+	display: block;
+	right: .75em;
+	top: 1.05em; /* IE6 only */
+	width: 10px;
+	height: 10px;
+	text-indent: -999em;
+	overflow: hidden;
+	background: url(../images/arrows-ffffff.png) no-repeat -10px -100px; /* 8-bit indexed alpha png. IE6 gets solid image only */
+}
+
+a > .sf-sub-indicator {  /* give all except IE6 the correct values */
+	top: .8em;
+	background-position: 0 -100px; /* use translucent arrow for modern browsers*/
+}
+
+/* apply hovers to modern browsers */
+a:focus > .sf-sub-indicator,
+a:hover > .sf-sub-indicator,
+a:active > .sf-sub-indicator,
+li:hover > a > .sf-sub-indicator,
+li.sfHover > a > .sf-sub-indicator {
+	background-position: -10px -100px; /* arrow hovers for modern browsers*/
+}
+
+/* point right for anchors in subs */
+ul.menu ul .sf-sub-indicator {
+	background-position: -10px 0;
+}
+
+ul.menu ul a > .sf-sub-indicator {
+	background-position: 0 0;
+}
+
+/* apply hovers to modern browsers */
+ul.menu ul a:focus > .sf-sub-indicator,
+ul.menu ul a:hover > .sf-sub-indicator,
+ul.menu ul a:active > .sf-sub-indicator,
+ul.menu ul li:hover > a > .sf-sub-indicator,
+ul.menu ul li.sfHover > a > .sf-sub-indicator {
+	background-position: -10px 0; /* arrow hovers for modern browsers*/
+}
+
+li span.sf-sub-indicator { /* disable sub-indicator on first-level links */
+	display: none;
+}
+
+li li span.sf-sub-indicator {
+	display: inline;
+}
+
+/* Secondary menu
+-------------------------------------------------------------- */
+/* This menu usually appears in the header as a set of simple text links */
+.secondary-menu {
+}
+
+/* Set general style for menu here -- background, alignment, etc. */
+.secondary-menu-inner ul.links {
+}
+
+/* Add a border-right here for a separator */
+.secondary-menu-inner ul.links li {
+}
+
+/* Add border-right: 0; here to remove right separator on last menu item */
+.secondary-menu-inner ul.links li.last {
+}
+
+/* Styles for links */
+.secondary-menu-inner ul.links li a:link,
+.secondary-menu-inner ul.links li a:visited {
+  padding: 3px;
+}
+
+.secondary-menu-inner ul.links li a:hover,
+.secondary-menu-inner ul.links li a:focus,
+.secondary-menu-inner ul.links li a.active {
+}
+
+
+/* Header - Search
+-------------------------------------------------------------- */
+.search-box {
+}
+
+.search-box-inner {
+}
+
+.search-box-inner form#search-theme-form {
+}
+
+.search-box-inner input#edit-search-theme-form-header {
+}
+
+
+/*  Preface Regions
+-------------------------------------------------------------- */
+/* The Preface Top region sits between the header and the Main Area
+ (columns, sidebars, and main content).  The Preface Bottom region
+ is inside the Main Area. */
+.preface-top-wrapper {
+}
+
+.preface-top {
+}
+
+.preface-top-inner {
+}
+
+.preface-bottom {
+}
+
+.preface-bottom-inner {
+}
+
+
+/*  Main Area (content + sidebars + preface bottom + postscript top)
+-------------------------------------------------------------- */
+.main-inner {
+	padding: 25px 0;
+}
+
+/* begin main-wrapper layout */
+.main-wrapper,
+.sidebars-both-first-grid12-0-grid12-0 {
+	background: url(../images/mb12.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-both-first-grid12-2-grid12-0,
+.sidebars-both-first-grid12-2-grid12-1,
+.sidebars-both-first-grid12-2-grid12-2,
+.sidebars-both-first-grid12-2-grid12-3,
+.sidebars-both-first-grid12-2-grid12-4,
+.sidebars-split-grid12-2-grid12-0 {
+	background: url(../images/sa2-sb2-mb8.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-both-first-grid12-3-grid12-0,
+.sidebars-both-first-grid12-3-grid12-1,
+.sidebars-both-first-grid12-3-grid12-2,
+.sidebars-both-first-grid12-3-grid12-3,
+.sidebars-both-first-grid12-3-grid12-4,
+.sidebars-split-grid12-3-grid12-0 {
+	background: url(../images/sa3-mb9.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-both-first-grid12-4-grid12-0,
+.sidebars-both-first-grid12-4-grid12-1,
+.sidebars-both-first-grid12-4-grid12-2,
+.sidebars-both-first-grid12-4-grid12-3,
+.sidebars-both-first-grid12-4-grid12-4,
+.sidebars-split-grid12-4-grid12-0 {
+	background: url(../images/sa4-mb8.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-both-first-grid12-6-grid12-0,
+.sidebars-both-first-grid12-6-grid12-1,
+.sidebars-both-first-grid12-6-grid12-2,
+.sidebars-both-first-grid12-6-grid12-3,
+.sidebars-both-first-grid12-6-grid12-4 {
+	background: url(../images/sa6-mb6.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-both-last-grid12-2-grid12-0,
+.sidebars-both-last-grid12-2-grid12-1,
+.sidebars-both-last-grid12-2-grid12-2,
+.sidebars-both-last-grid12-2-grid12-3,
+.sidebars-both-last-grid12-2-grid12-4,
+.sidebars-split-grid12-0-grid12-2 {
+	background: url(../images/mb8-sa2-sb2.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-both-last-grid12-3-grid12-0,
+.sidebars-both-last-grid12-3-grid12-1,
+.sidebars-both-last-grid12-3-grid12-2,
+.sidebars-both-last-grid12-3-grid12-3,
+.sidebars-both-last-grid12-3-grid12-4,
+.sidebars-split-grid12-0-grid12-3 {
+	background: url(../images/mb9-sa3.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-both-last-grid12-4-grid12-0,
+.sidebars-both-last-grid12-4-grid12-1,
+.sidebars-both-last-grid12-4-grid12-2,
+.sidebars-both-last-grid12-4-grid12-3,
+.sidebars-both-last-grid12-4-grid12-4,
+.sidebars-split-grid12-0-grid12-4 {
+	background: url(../images/mb8-sa4.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-both-last-grid12-6-grid12-0,
+.sidebars-both-last-grid12-6-grid12-1,
+.sidebars-both-last-grid12-6-grid12-2,
+.sidebars-both-last-grid12-6-grid12-3,
+.sidebars-both-last-grid12-6-grid12-4 {
+	background: url(../images/mb6-sa6.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-split-grid12-2-grid12-2 {
+	background: url(../images/sa2-mb8-sb2.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-split-grid12-3-grid12-3 {
+	background: url(../images/sa3-mb6-sb3.jpg) repeat-y scroll center top #C8B694;
+}
+
+.sidebars-split-grid12-4-grid12-4 {
+	background: url(../images/sa4-mb4-sb4.jpg) repeat-y scroll center top #C8B694;
+}
+/* end main-wrapper layout */
+
+
+/* Sidebar Regions
+-------------------------------------------------------------- */
+/* Sidebar widths can be controlled through theme settings */
+.sidebar-first {
+}
+
+.sidebar-last {
+}
+
+
+/* Content Regions
+-------------------------------------------------------------- */
+.content-top {
+}
+
+.content {
+}
+
+.content-inner {
+}
+
+.content-inner-inner {
+	padding: 0 10px;
+}
+
+.content-bottom {
+}
+
+/* This region only appears on full node pages. It's useful for ads or other
+  content between the body of the node and its comments */
+.node-bottom {
+}
+
+/*  Postscript & Footer Regions
+-------------------------------------------------------------- */
+.postscript-top {
+}
+
+.postscript-top-inner {
+}
+
+.postscript-bottom-wrapper {
+	margin-top: -8px;
+  background: url(../images/bottombg.jpg) repeat scroll 0 0 transparent;
+  color: #2F281E;
+}
+
+.postscript-bottom {
+}
+
+.postscript-bottom-inner {
+	padding: 25px 0;
+}
+
+.postscript-bottom-inner .block {
+	margin: 0;
+}
+
+.footer-wrapper {
+	background: url(../images/foot-wood.png) repeat-x scroll 0 0 transparent;
+  min-height: 134px;
+  margin-top: -15px;
+}
+
+.footer {
+}
+
+.footer-inner {
+	padding-top: 30px;
+}
+
+#footer-inner {
+	color: #EFD6C2;
+}
+
+#footer-inner h2.block-title {
+	color: #777777;
+  font-size: 150%;
+  font-weight: normal;
+  letter-spacing: normal;
+  word-spacing: 4px;
+  border: none;
+}
+
+#footer-inner h2.block-title span {
+	color: #333333;
+}
+
+#footer-inner div.block-divider {
+	display: none;
+}
+
+.footer-message-wrapper {
+}
+
+.footer-message {
+}
+
+.footer-message-inner {
+}
+
+.footer-message-text {
+}
+
+
+/* Page titles
+/-------------------------------------------------------------- */
+/* Page and full node titles */
+h1.title {
+	font-family: 'Bebas', Arial, Helvetica, sans-serif;
+  text-transform: uppercase;
+}
+
+
+/* Default node styles
+/-------------------------------------------------------------- */
+/* Change unpublished and preview colors for dark background themes */
+.node-unpublished {
+  background-color: #fff4f4;
+}
+.preview .node {
+  background-color: #ffffea;
+}
+
+/* Typography for node titles */
+h2.title {
+}
+
+/* Colors and styles for linked node titles, ie. teaser listing at /node */
+h2.title a:link,
+h2.title a:visited {
+}
+
+h2.title a:hover,
+h2.title a:focus,
+h2.title a:active {
+}
+
+/* Separators and padding for node teasers */
+.teaser {
+}
+
+/* Author/date info */
+.meta {
+}
+
+.submitted {
+}
+
+/* Links for nodes (taxonomy, commenting, read more, etc) */
+.node ul.links li {
+}
+.node ul.links a {
+}
+
+/* Only more/read more links */
+div.node .read-more a,
+div.node .more-link a {
+}
+
+/* Drupal Messages
+/-------------------------------------------------------------- */
+/* General style for all errors/messages (border, padding, etc.) */
+div.content-messages div.messages,
+div.content-help div.help {
+}
+
+/* Status messages: green */
+div.content-messages-inner div.status {
+}
+
+/* Warning messages: yellow */
+div.content-messages-inner div.warning {
+}
+
+/* Error messages: red */
+div.content-messages-inner div.error {
+}
+
+/* Help messages: blue */
+div.content-help-inner div.help {
+}
+
+/* Error that appears when a required form field is not filled out */
+.form-item input.error,
+.form-item textarea.error,
+.form-item select.error {
+  border: 1px solid #aa1144;
+}
+
+/* "New" text and required form field asterisk (default = red) */
+.marker,
+.form-required {
+  color: #aa1144;
+}
+
+
+/* Default block title styles
+/-------------------------------------------------------------- */
+h2.block-title {
+	border-top: 3px solid #8B553D;
+  color: #383022;
+  font-family: 'Bebas', Arial, Helvetica, sans-serif;
+  font-size: 21pt;
+  font-weight: bold;
+  line-height: 120%;
+  word-spacing: 8px;
+  margin-bottom: .15em;
+  text-transform: uppercase;
+}
+
+h2.block-title span {
+	color: #8B553D;
+}
+
+
+/* Breadcrumbs
+-------------------------------------------------------------- */
+#breadcrumbs-wrapper {
+	background: url(../images/template.png) repeat-x scroll 0 -95px;
+  height: 35px;
+  padding-top: 5px;
+  clear: both;
+}
+
+#breadcrumbs-inner {
+	margin: 0 auto;
+  padding: 11px 15px 0px 5px;
+  width: 940px;
+}
+
+div.breadcrumbs {
+	font-family: Georgia, Garamond, serif;
+  font-size: 10pt;
+  text-transform: uppercase;
+  color: #2F2106;
+}
+
+.breadcrumbs a:link,
+.breadcrumbs a:visited {
+	color: #2F2106;
+}
+
+div.breadcrumbs .sep {
+	padding: 0 5px;
+}
+
+div#breadcrumbs.block {
+	margin: 0;
+}
+
+
+/* Tab Menus
+/-------------------------------------------------------------- */
+#content-tabs {
+  background-color: transparent;
+  float: left; /* LTR */
+  margin: 20px 0;
+  padding: 0;
+}
+
+#content-tabs ul.primary,
+#content-tabs ul.secondary {
+  border-bottom: 1px solid #000;
+  clear: both;
+  float: left; /* LTR */
+  margin: 0;
+  padding: 0 10px;
+}
+
+#content-tabs ul.secondary {
+  border-bottom: 1px solid #555;
+  margin-top: 10px;
+  text-transform: lowercase;
+}
+
+#content-tabs ul.primary li,
+#content-tabs ul.secondary li {
+  border-style: none;
+  display: inline;
+  float: left; /* LTR */
+  list-style: none;
+  margin: 0 10px;
+  padding: 0;
+}
+
+#content-tabs ul.primary li a:link,
+#content-tabs ul.primary li a:visited,
+#content-tabs ul.secondary li a:link,
+#content-tabs ul.secondary li a:visited {
+  background-color: transparent;
+  border: none;
+  color: #000;
+  float: left; /* LTR */
+  font-weight: bold;
+  margin: 0;
+  padding: 0 0 6px 0;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+#content-tabs ul.secondary li a:link,
+#content-tabs ul.secondary li a:visited {
+  color: #555;
+}
+
+#content-tabs ul.primary li a.active:link,
+#content-tabs ul.primary li a.active:visited {
+  border-bottom: 4px solid #000;
+  color: #555;
+  padding-bottom: 2px;
+}
+
+#content-tabs ul.secondary li a.active:link,
+#content-tabs ul.secondary li a.active:visited {
+  border-bottom: 4px solid #555;
+  color: #777;
+  padding-bottom: 2px;
+}
+
+#content-tabs ul.primary li a:hover,
+#content-tabs ul.primary li a:focus,
+#content-tabs ul.secondary li a:hover,
+#content-tabs ul.secondary li a:focus {
+  border-bottom: 4px solid #777;
+  color: #777;
+  padding-bottom: 2px;
+}
+
+/* Pagers
+-------------------------------------------------------------- */
+ul.pager {
+}
+
+ul.pager li {
+}
+
+ul.pager a,
+ul.pager li.pager-current {
+  border-color: #333;
+}
+
+ul.pager li.pager-current {
+  background-color: #777;
+  color: #fff;
+}
+
+ul.pager a:hover,
+ul.pager a:active,
+ul.pager a:focus {
+  background-color: #777;
+  border-color: #333;
+  color: #fff;
+}
+
+/* Forms
+/-------------------------------------------------------------- */
+/* Typography and backgrounds for all form buttons */
+form input.form-submit {
+  margin: 2px;
+  padding: 3px 5px;
+}
+
+/* Hover style for form buttons */
+form input.form-submit:hover,
+form input.form-submit.hover,
+form input.form-submit:focus {
+}
+
+/* Typography, background, borders, padding for form fields */
+.form-item input,
+.form-item select,
+.form-item textarea {
+}
+
+/* Remove backgrounds and border on radios and checkboxes */
+.form-item .form-radio,
+.form-item .form-checkbox {
+  background: none;
+  border: none !important;
+}
+
+/* Fieldset wrapper around groups of form elements -- add border here */
+fieldset {
+}
+
+/* Typography and spacing for legend of fieldsets */
+fieldset legend {
+}
+
+/* Link style for legend of fieldsets */
+fieldset legend,
+legend.collapse-processed,
+legend.collapse-processed a:link,
+legend.collapse-processed a:visited {
+}
+
+/* Custom icons on (open) collapsible fieldsets */
+html.js fieldset.collapsible legend a:link,
+html.js fieldset.collapsible legend a:visited {
+}
+
+/* Custom icons on (closed) collapsible fieldsets */
+html.js fieldset.collapsed legend a:link,
+html.js fieldset.collapsed legend a:visited {
+}
+
+
+/* Tables
+-------------------------------------------------------------- */
+table {
+}
+
+/* Body of tables */
+tbody {
+  border-top: 1px solid #ccc;
+}
+
+/* Header of tables */
+thead th,
+th {
+  border-bottom: 3px solid #ccc;
+}
+
+tbody th {
+  border-bottom: 1px solid #ccc;
+}
+
+/* Alternating row background styles */
+tr.even,
+tr.even td {
+  background-color: #eee;
+  border-bottom: 1px solid #ccc;
+}
+
+tr.odd,
+tr.odd td {
+  background-color: #fff;
+  border-bottom: 1px solid #ccc;
+}
+
+td.active {
+}
+
+tr.drag td,
+tr.drag-previous td {
+  color: #000;
+}
+
+
+/* Maintenance Page
+/-------------------------------------------------------------- */
+/* Maintenance page tpl file in Fusion Core has simplified layout, but you can
+  also add specific styles, such as a background, just for your offline page */
+.in-maintenance  {
+}
+
+
+/*--------------------------------------------------------------*/
+/* Module styles
+/-------------------------------------------------------------- */
+
+
+/* Book
+/-------------------------------------------------------------- */
+.book-navigation .menu {
+  border-top: 1px solid #ccc;
+}
+
+.book-navigation .page-links {
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+
+
+/* Comments
+/-------------------------------------------------------------- */
+.comments h2 {
+	font-family: 'Bebas', Arial, Helvetica, sans-serif;
+}
+
+/* Style for each individual comment */
+div.comment {
+  border: 2px dashed #FFF3CF;
+}
+
+/* Subject (title) of each comment */
+div.comment h3.title {
+	font-size: 140%;
+}
+
+/* Links (edit, reply, delete) for each comment */
+div.comment div.links a,
+div.comment ul.links a {
+	padding: 2px 0 2px 22px;
+}
+
+.comments div.links {
+	clear: both;
+  float: right;
+}
+
+.comments ul.links {
+	margin-bottom: 0;
+}
+
+.comments ul.links li {
+	margin-right: 5px;
+}
+
+.comments li.comment_delete a {
+	background: url(../images/comment-delete.png) top left no-repeat;
+}
+
+.comments li.comment_edit a {
+	background: url(../images/comment-edit.png) top left no-repeat;
+}
+
+.comments li.comment_reply a {
+	background: url(../images/comment-reply.png) top left no-repeat;
+}
+
+/* Alternating styles for even/odd comments */
+.comments div.odd {
+  background-color: #EFE4C2;
+}
+
+.comments div.even {
+  background-color: #EFE0B3;
+}
+
+/* A special highlight style for a comment by the author of the node */
+.comments div.comment-by-author {
+  background-color: #EFDCA4;
+  border: 2px solid #CFAF4D;
+}
+
+.comments div.comment-author {
+	float: left;
+  width: 20%;
+}
+
+.comments div.author {
+	font-weight: bold;
+}
+
+.comments div.comment-content {
+	float: right;
+  width: 79%;
+}
+
+.comments div.submitted {
+	font-size: 85%;
+}
+
+/* Comment signatures */
+.signature {
+  clear: both;
+  width: 79%;
+  border-top: 1px dotted #AF8300;
+  float: right;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-style: italic;
+}
+
+.signature p {
+	margin: .5em 0 0 0;
+}
+
+/* User avatars in comments */
+.comment-wrapper .picture img {
+}
+
+
+/* Forum
+/-------------------------------------------------------------- */
+#forum .description {
+}
+
+.forum-topic-navigation {
+  border-top: 1px solid #888;
+  border-bottom: 1px solid #888;
+}
+
+
+/* Poll
+/-------------------------------------------------------------- */
+div.poll div.bar {
+  background-color: #ddd;
+}
+
+div.poll div.bar div.foreground {
+  background-color: #999;
+}
+
+.poll .vote-form {
+	text-align: left;
+}
+
+.poll .vote-form .choices {
+	margin: 0;
+}
+
+
+/* Profiles
+/-------------------------------------------------------------- */
+.profile .picture {
+  float: none;
+}
+
+/* Styles for sub-headings on user profiles */
+.profile dt {
+  background-color: #ccc;
+}
+
+/* Search
+/-------------------------------------------------------------- */
+#search-block-form label {
+	display: none;
+}
+
+#search-block-form .form-text {
+	width: 70%;
+  background-color: #B4A684;
+  border: 1px solid #2F2106;
+  height: 20px;
+  margin: 1px 0 0 5px;
+  padding-left: 3px;
+}
+
+
+/* Ubercart - catalog
+/-------------------------------------------------------------- */
+
+/* Horizontal list of subcategories in catalog */
+ul.uc-categories {
+}
+
+.uc-categories li a {
+  font-weight: bold;
+  padding: 0 5px 0 3px;
+}
+
+/* Product and category names */
+.catalog-grid-title a:link,
+.catalog-grid-title a:visited,
+.category a:link,
+.category a:visited {
+}
+
+.catalog-grid-title a:hover,
+.catalog-grid-title a:focus,
+.category a:hover,
+.category a:focus {
+}
+
+/* Sell price in Ubercart catalog */
+.category-grid-products .catalog-grid-sell-price {
+}
+
+/* Ubercart - add to cart buttons
+/-------------------------------------------------------------- */
+
+/* Add to cart buttons */
+input.node-add-to-cart,
+input.list-add-to-cart {
+}
+
+/* Hover and focus styles, with .hover class added for IE6 support */
+input.node-add-to-cart:hover,
+input.node-add-to-cart.hover,
+input.node-add-to-cart:focus,
+input.list-add-to-cart:hover,
+input.list-add-to-cart.hover,
+input.list-add-to-cart:focus {
+}
+
+/* Ubercart - product nodes
+/-------------------------------------------------------------- */
+
+#field-group {
+}
+
+#price-group {
+}
+
+/* Product images */
+.product-image a img {
+}
+
+.product-image a:hover img,
+.product-image a:focus img {
+}
+
+/* Display price on full product nodes */
+.full-node .product-group .uc-price-display {
+}
+
+/* Product attributes on full nodes */
+.full-node .product-group .attributes {
+}
+
+/* Ubercart - general / checkout
+/-------------------------------------------------------------- */
+
+/* For optional "Powered by Ubercart" footer message */
+#store-footer {
+}
+
+#store-footer a:link,
+#store-footer a:visited {
+}
+
+/* View cart/Checkout links in Ubercart cart block */
+.cart-block-summary-links ul.links li a {
+}
+
+.cart-block-summary-links ul.links li.cart-block-checkout a:link,
+.cart-block-summary-links ul.links li.cart-block-checkout a:visited {
+}
+
+/* Key checkout process buttons: Checkout, Continue, and Submit Order */
+#uc-cart-view-form #edit-checkout,
+#uc-cart-checkout-form #edit-continue,
+#uc-cart-checkout-review-form #edit-submit {
+}
+
+/* Table on final order review page */
+.order-review-table {
+}
+
+#cart-form-products table th {
+  border-bottom: 3px solid #dec2c3;
+}
+
+
+/* Skinr
+/-------------------------------------------------------------- */
+
+/* This is a sample Skinr style to get you started. See fusion_starter.info */
+.fusion-example-stylename .inner {
+  /* When setting the background color, also set foreground colors for text and
+    links, even if it's similar to the default body style. Remember, this block
+    style may be used in regions with other foreground colors, thus making text
+    invisible if left unspecified */
+  background-color: #ccc;
+  color: #000;
+  /* All padding and borders should go on the .inner div, so as not to break
+    the widths of the grid */
+  border: 3px solid #000;
+  padding: 10px;
+}
+
+
+/* Miscellaneous
+/-------------------------------------------------------------- */
+.readon {
+	background: url(../images/button_right.png) no-repeat scroll 100% 0 transparent;
+  display: inline-block;
+  height: 25px;
+  line-height: 25px;
+  margin: 5px 5px 5px 8px;
+}
+
+.readon span {
+  border: 0 none;
+  display: block;
+  float: left;
+  font-size: 12px;
+  font-weight: normal;
+  height: 25px;
+  line-height: 25px;
+  margin-left: -8px;
+  padding: 0 8px 0 12px;
+  text-transform: uppercase;
+}
+
+a.readon span {
+  background: url(../images/button_left.png) no-repeat scroll 0 0 transparent;
+  color: #FF9905;
+  font-family: Georgia, Garamond, serif;
+  font-size: 14px;
+  text-transform:uppercase;
+  padding: 0 10px 0 12px;
+}
+
+.block-divider {
+	background: url(../images/template.png) repeat-x scroll 0 0 transparent;
+  height: 3px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+#user-login-form .form-item input {
+	width: 95%;
+  height: 20px;
+  background-color: #B4A684;
+  border: 1px solid #2F2106;
+}

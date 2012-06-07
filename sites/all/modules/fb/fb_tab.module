@@ -1,0 +1,438 @@
+<?php
+/**
+ * @file
+ *
+ * This module provides support for "Profile Tabs" that can be added to
+ * facebook pages (no longer allowed for user profiles).
+ *
+ * http://developers.facebook.com/docs/guides/canvas/#tabs
+ *
+ */
+// hook_fb
+define('FB_TAB_HOOK', 'fb_tab');
+
+//// Hook_fb_tab operations
+define('FB_TAB_OP_VIEW', 'fb_tab_view');
+define('FB_TAB_OP_FORM', 'fb_tab_form');
+
+define('FB_TAB_PATH_VIEW', 'fb_tab/view');
+define('FB_TAB_PATH_FORM', 'fb_tab/config');
+define('FB_TAB_PATH_FORM_ARGS', 2);
+
+define('FB_TAB_VAR_PROCESS_FBML', 'fb_tab_process_fbml');
+define('FB_TAB_VAR_PROCESS_IFRAME', 'fb_tab_process_iframe');
+define('FB_TAB_VAR_PROCESS_ABSOLUTE', 'fb_tab_process_absolute_links');
+define('FB_TAB_VAR_PROCESS_TO_CANVAS', 'fb_tab_process_to_canvas');
+
+function fb_tab_menu() {
+  $items = array();
+
+  $items[FB_TAB_PATH_VIEW] = array(
+    'page callback' => 'fb_tab_view',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items[FB_TAB_PATH_FORM] = array(
+    'title' => 'Configure Tabs',
+    'page callback' => 'fb_tab_pages',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items[FB_TAB_PATH_FORM . '/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fb_tab_config_form', FB_TAB_PATH_FORM_ARGS),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  // Admin pages
+  $items[FB_PATH_ADMIN .'/fb_tab'] = array(
+    'title' => 'Page Tabs',
+    'description' => 'Configure Tabs',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fb_tab_admin_settings'),
+    'access arguments' => array(FB_PERM_ADMINISTER),
+    'file' => 'fb_tab.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_fb
+ *
+ * @param $op
+ * @param $data -- data payload
+ * @param $return
+ */
+function fb_tab_fb($op, $data, &$return) {
+  $fb = isset($data['fb']) ? $data['fb'] : NULL;
+  $fb_app = isset($data['fb_app']) ? $data['fb_app'] : NULL;
+
+  if ($op == FB_OP_POST_INIT) {
+    // Include our admin hooks.
+    if (fb_is_fb_admin_page()) {
+      require drupal_get_path('module', 'fb_tab') . '/fb_tab.admin.inc';
+    }
+
+    if (fb_is_tab()) {
+      // Include our javascript.
+      drupal_add_js(array(
+                      'fb_tab' => array(
+                        'fbu' => fb_facebook_user(),
+                        'uid' => $GLOBALS['user']->uid,
+                        'canvas' => $fb_app->canvas,
+                      ),
+                    ), 'setting');
+      drupal_add_js(drupal_get_path('module', 'fb_tab') . '/fb_tab.js');
+    }
+  }
+  elseif ($op == FB_OP_CURRENT_APP && fb_is_tab()) {
+    if ($id = fb_settings(FB_SETTINGS_CB)) {
+      // Using fb_url_rewrite.
+      $fb_app = fb_get_app(array('id' => $id));
+
+      if (!$fb_app) {
+        // DEPRECATED.  For backward compatibility, accept apikey in FB_SETTINGS_CB
+        $fb_app = fb_get_app(array('apikey' => $id));
+      }
+
+    }
+    elseif ($id = fb_settings(FB_SETTINGS_ID)) {
+      // New SDK includes ID when session is present.
+      $fb_app = fb_get_app(array('id' => $id));
+    }
+
+    // Old, deprecated, FBML tabs.
+    elseif (isset($_REQUEST['fb_sig_api_key'])) {
+      $return = fb_get_app(array('apikey' => $_REQUEST['fb_sig_api_key']));
+    }
+
+    if ($fb_app) {
+      $return = $fb_app;
+    }
+  }
+  elseif ($op == FB_OP_INITIALIZE) {
+    if (fb_is_tab()) {
+      $config = _fb_tab_get_app_config($fb_app);
+      if (!isset($GLOBALS['custom_theme'])) {
+        $GLOBALS['custom_theme'] = $config['custom_theme'];
+      }
+      if (fb_settings(FB_SETTINGS_TYPE) == FB_SETTINGS_TYPE_PAGE_TAB &&
+          variable_get(FB_TAB_VAR_PROCESS_IFRAME, TRUE)) {
+        // Process iframe
+        $use_ob = TRUE;
+      }
+      elseif (fb_settings(FB_SETTINGS_TYPE) == FB_SETTINGS_TYPE_PROFILE &&
+              variable_get(FB_TAB_VAR_PROCESS_FBML, TRUE)) {
+        // Process FBML
+        $use_ob = TRUE;
+      }
+      else {
+        $use_ob = FALSE;
+      }
+
+      // Hack to init the theme before _drupal_maintenance_theme initializes the wrong one.
+      if (variable_get('site_offline', FALSE)) {
+        $dummy = theme('dummy');
+      }
+
+      // Store entire page in output buffer.  Will post-process on exit.
+      if ($use_ob) {
+        ob_start();
+        $GLOBALS['fb_tab_post_process'] = TRUE;
+      }
+
+      // Override what Drupal renders.
+      if (arg(0) == 'fb_tab' && arg(1) == 'view') { // Do not override fb_tab/config.
+        $sr = $fb->getSignedRequest();
+        if ($sr['page'] && $sr['page']['liked'] && $config['profile_tab_url_liked']) {
+          $path = $config['profile_tab_url_liked'];
+        }
+        else {
+          $path = $config['profile_tab_url'];
+        }
+        if ($path && $path != FB_TAB_PATH_VIEW) {
+          // Tell Drupal what to really render.
+          menu_set_active_item(drupal_get_normal_path($path));
+        }
+      }
+
+    }
+  }
+  elseif ($op == FB_OP_EXIT && fb_is_tab()) {
+    if (isset($GLOBALS['fb_tab_post_process']) && $GLOBALS['fb_tab_post_process']) {
+      $output = ob_get_contents();
+      ob_end_clean();
+      include_once(drupal_get_path('module', 'fb') . '/fb.process.inc');
+
+      if (variable_get(FB_TAB_VAR_PROCESS_TO_CANVAS, TRUE)) {
+        $to_canvas = $fb_app->canvas;
+      }
+      else {
+        $to_canvas = FALSE;
+      }
+
+      if (fb_settings(FB_SETTINGS_TYPE) == FB_SETTINGS_TYPE_PAGE_TAB) {
+        // Process iframe
+        $output = fb_process($output, array(
+                               'add_target' => '_top',
+                               'absolute_links' => TRUE,
+                               'to_canvas' => $to_canvas,
+                             ));
+      }
+      elseif (fb_settings(FB_SETTINGS_TYPE) == FB_SETTINGS_TYPE_PROFILE) {
+        // Process FBML (deprecated)
+        $output = fb_process($output, array(
+                               'add_target' => FALSE,
+                               'absolute_links' => TRUE,
+                               'to_canvas' => $to_canvas,
+                             ));
+      }
+      if (isset($output)) {
+        print($output);
+      }
+    }
+  }
+}
+
+/**
+ * Implements fb_tab_form_alter.
+ */
+function fb_tab_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['fb_app_data']) && is_array($form['fb_app_data'])) {
+    // Add our settings to the fb_app edit form.
+    //require 'fb_canvas.admin.inc';
+    fb_tab_admin_form_alter($form, $form_state, $form_id);
+  }
+}
+
+/**
+ * Helper returns configuration for this module, on a per-app basis.
+ */
+function _fb_tab_get_app_config($fb_app) {
+  $fb_app_data = fb_get_app_data($fb_app);
+  $config = isset($fb_app_data['fb_tab']) ? $fb_app_data['fb_tab'] : array();
+
+  // Merge in defaults
+  $config += array(
+    'custom_theme' => NULL,
+    'tab_default_name' => isset($fb_app->title) ? $fb_app->title : NULL,
+    'profile_tab_url' => NULL,
+    'profile_tab_url_liked' => NULL,
+    'edit_url' => FB_TAB_PATH_FORM,
+  );
+  return $config;
+}
+
+/**
+ * Another module provides the contents of the tab depending
+ * on the context that we give it (who is calling it, etc.)
+ */
+function fb_tab_view() {
+  $fb_app = $GLOBALS['_fb_app'];
+  $fb = $GLOBALS['_fb'];
+
+  $profile_id = fb_settings(FB_SETTINGS_CB_PAGE);
+
+  $config = fb_tab_get_page_config($fb_app, $profile_id);
+  dpm($config, __FUNCTION__);
+
+  $sr = $fb->getSignedRequest();
+
+  $data = array(
+    'fb_app' => $fb_app,
+    'fb' => $fb,
+    'profile_id' => $profile_id,
+    'config' => isset($config['data']) ? $config['data'] : NULL,
+    'page' => $sr['page'],
+  );
+
+  $content = fb_invoke(FB_TAB_OP_VIEW, $data, array(), FB_TAB_HOOK);
+
+  return drupal_render($content);
+}
+
+/**
+ * Build the tab config form.  Invokes hook_fb_tab() to get the custom settings.
+ */
+function fb_tab_config_form($form_state, $profile_id) {
+  $fb_app = $GLOBALS['_fb_app'];
+  $fb = $GLOBALS['_fb'];
+
+  $config = fb_tab_get_page_config($fb_app, $profile_id);
+  $sr = $fb->getSignedRequest();
+
+  $data = array(
+    'fb_app' => $fb_app,
+    'fb' => $fb,
+    'profile_id' => $profile_id,
+    'config' => isset($config['data']) ? $config['data'] : NULL,
+    'page' => $sr['page'],
+  );
+
+  try {
+    //$fbu = fb_facebook_user($fb);
+    $fbu = fb_require_authorization($fb);
+    $page_info = $fb->api($profile_id, array(
+                            'access_token' => fb_get_token($fb),
+                          ));
+    $admin_info = fb_fql_query($fb, "SELECT uid, type FROM page_admin WHERE uid=$fbu AND page_id=$profile_id"); // FQL not SQL, no {curly_brackets}
+    //dpm($admin_info, __FUNCTION__);
+
+    // @TODO: if not page admin, prompt user to login or deny access.
+
+    $form = array(
+      'info' => array(
+        '#type' => 'markup',
+        '#value' => t('Tab settings for <a href="!href">%page</a>', array(
+                        '!href' => $page_info['link'],
+                        '%page' => $page_info['name'],
+                      )),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+        '#weight' => -99,
+      ),
+      'label' => array(
+        '#type' => 'value',
+        '#value' => $fb_app->label,
+      ),
+      'profile_id' => array(
+        '#type' => 'value',
+        '#value' => $profile_id,
+      ),
+      'data' => array(
+        // Modules will add their fields here.
+        '#tree' => TRUE,
+      ),
+      'submit' => array(
+        '#type' => 'submit',
+        '#value' => t('Submit'),
+        '#weight' => 90,
+      ),
+    );
+
+    if (isset($config['fb_tab_id'])) {
+      $form['fb_tab_id'] = array(
+        '#type' => 'value',
+        '#value' => $config['fb_tab_id'],
+      );
+    }
+
+    $form['data'] = fb_invoke(FB_TAB_OP_FORM, $data, $form['data'], FB_TAB_HOOK);
+
+    //print('<pre>' . print_r($data, 1) . '</pre>'); flush();
+    //print(print_r($content, 1)); flush();
+
+    return $form;
+  }
+  catch (Exception $e) {
+    fb_log_exception($e, t('Failed to get details for facebook page %profile_id', array(
+                             '%profile_id' => $profile_id,
+                           )));
+    return array(
+      'error' => array(
+        '#value' => t('Unable to set properties.'),
+      ),
+    );
+  }
+}
+
+/**
+ * Submit handler for tab config form.
+ */
+function fb_tab_config_form_submit($form, &$form_state) {
+  if ($profile_id = $form_state['values']['profile_id']) {
+    fb_tab_write_config($form_state['values']);
+    $data = fb_fql_query($GLOBALS['_fb'], "SELECT page_id, name, pic_small, page_url, type FROM page WHERE page_id=$profile_id"); // FQL, no {curly_brackets}
+    drupal_set_message(t('The tab settings for <a href="!url">%page</a> have been updated.', array(
+                           '!url' => $data[0]['page_url'],
+                           '%page' => $data[0]['name'],
+                         )));
+  }
+}
+
+/*
+ * Store configuration data for a tab by application.
+ */
+function fb_tab_write_config(&$row) {
+  if (!isset($row['created']))
+    $row['created'] = time();
+  $row['data'] = serialize($row['data']);
+  return drupal_write_record('fb_tab', $row,
+                             isset($row['fb_tab_id']) ? array('fb_tab_id') : NULL);
+}
+
+/*
+ * Return configuration of a tab by application (access via 'label') and page ID.
+ * Page ID exists because an app can present different views on different pages.
+ */
+function fb_tab_get_page_config($fb_app, $profile_id) {
+  $result = db_query("SELECT * FROM {fb_tab} WHERE label = '%s' AND profile_id = %d" , $fb_app->label, $profile_id);
+
+  $row = db_fetch_array($result);
+  if ($row) {
+    $row['data'] = unserialize($row['data']);
+    return $row;
+  }
+  else {
+    return array();
+  }
+}
+
+/**
+ * This page callback will show the user a list of pages they have authority
+ * to configure.
+ */
+function fb_tab_pages() {
+  if ($fbu = fb_facebook_user()) {
+
+    // @TODO: broken on facebook's end??? this query used to work.
+    $result = fb_fql_query($GLOBALS['_fb'], "SELECT page_id, name, pic_small, page_url, type FROM page WHERE has_added_app=1 AND page_id IN (SELECT page_id FROM page_admin WHERE uid=$fbu)"); // FQL, no {curly_brackets}
+
+    if (count($result)) {
+      $output['pages'] = array(
+        '#prefix' => '<ul>',
+        '#suffix' => '</ul>',
+      );
+      foreach ($result as $data) {
+        $output['pages'][$data['page_id']] = array(
+          '#value' => l($data['name'], fb_tab_config_url($data['page_id'], array('fb_canvas' => fb_is_canvas()))),
+          '#prefix' => '<li>',
+          '#suffix' => '</li>',
+        );
+      }
+      $output['intro'] = array(
+        '#value' => t('Select one of your pages to configure:'),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      );
+    }
+    else {
+      $output['intro'] = array(
+        '#value' => t('Found no pages to configure.'),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      );
+    }
+    return drupal_render($output);
+  }
+  else {
+    fb_access_denied();
+  }
+}
+
+
+/**
+ * Provides the URL of the settings page for a given facebook page.
+ */
+function fb_tab_config_url($profile_id = NULL, $options = array()) {
+  if (!$profile_id) {
+    $profile_id = fb_settings(FB_SETTINGS_CB_PAGE);
+  }
+  return url(FB_TAB_PATH_FORM . '/' . $profile_id, $options);
+}
+

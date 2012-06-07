@@ -1,0 +1,11 @@
+<?php
+
+function lucid_menu_uninstall()
+{
+	$lucid_variables = db_query("SELECT name FROM {variable} WHERE name like 'lucid_%'");
+	
+	while ($row = db_fetch_object($lucid_variables))
+		variable_del($row->name);
+}
+
+?>

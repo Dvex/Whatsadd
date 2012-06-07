@@ -1,0 +1,19 @@
+; $Id: $
+name = Urban View
+description = 2 Column Layout, Blog Theme
+core = 6.x
+engine = phptemplate
+stylesheets[all][] = style.css
+
+regions[right_sidebar] = Sidebar
+regions[content_top] = Content Top
+regions[content] = Content
+regions[content_bottom] = Content Bottom
+regions[header] = Header
+regions[footer] = Footer
+; Information added by drupal.org packaging script on 2011-09-01
+version = "6.x-1.0"
+core = "6.x"
+project = "urban_view"
+datestamp = "1314853626"
+

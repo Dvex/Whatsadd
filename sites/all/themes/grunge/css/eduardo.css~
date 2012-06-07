@@ -1,0 +1,15 @@
+body#pid-anuncios-lista.front div#page.page div#block-user-0.block div.inner div.content form#user-login-form div div#edit-name-wrapper.form-item{
+	display: none;
+}
+
+body#pid-anuncios-lista.front div#page.page div#block-user-0.block div.inner div.content form#user-login-form div div#edit-pass-wrapper.form-item{
+	display: none;
+}
+
+body#pid-anuncios-lista.front div#page.page div#block-user-0.block div.inner div.content form#user-login-form div input#edit-submit.form-submit{
+	display: none;
+}
+
+body#pid-anuncios-lista.front div#page.page div#block-user-0.block div.inner div.content form#user-login-form div div.item-list{
+	display: none;
+}

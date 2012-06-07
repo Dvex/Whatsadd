@@ -1,0 +1,165 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * The installation file for the Taxonomy Filter module.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function taxonomy_filter_install() {
+  // unnecessary - hook_enable is run by module installs
+  //taxonomy_filter_update_mappings();
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function taxonomy_filter_uninstall() {
+  variable_del('taxonomy_filter_general');
+  variable_del('taxonomy_filter_input');
+  variable_del('taxonomy_filter_input_parsed');
+  variable_del('taxonomy_filter_output');
+  //variable_del('taxonomy_filter_cache');
+  variable_del('taxonomy_filter_mappings');
+  variable_del('taxonomy_filter_menus');
+  // Leave in case module is uninstalled without running update_6003.
+  variable_del('taxonomy_filter_next_id');
+}
+
+/**
+ * Convert settings from Drupal 5 to Drupal 6.
+ *
+ * TODO What are the changes?
+ */
+/*
+function taxonomy_filter_update_6000() {
+  // convert variables to new format
+
+  return array();
+}
+*/
+
+/**
+ * Add default settings.
+ */
+function taxonomy_filter_update_6001() {
+  // Collect default settings.
+  $settings = array();
+  $modules = module_implements('tf_default_settings');
+  foreach ($modules as $module) {
+    $settings[$module] = module_invoke($module, 'tf_default_settings');
+  }
+
+  // Update settings for each menu.
+  $menus = variable_get('taxonomy_filter_menus', array());
+  foreach ($menus as $id => $menu) {
+    $menus[$id] += array(
+      'depth' => '0',
+    );
+    foreach ($modules as $module) {
+      $menus[$id][$module] = $settings[$module];
+    }
+  }
+
+  // Save settings.
+  variable_set('taxonomy_filter_menus', $menus);
+
+  return array();
+}
+
+/**
+ * Update vocabulary mappings.
+ */
+function taxonomy_filter_update_6002() {
+  // Retrieve current mappings.
+  $old_mappings = variable_get('taxonomy_filter_mappings', array());
+  $new_mappings = array();
+
+  // Update mappings for each vocabulary.
+  $vocabs = _taxonomy_filter_get_vocabs();
+  foreach ($vocabs as $vid => $name) {
+    // Recreate array in case vocab weights have changed.
+    if (array_key_exists($vid, $old_mappings)) {
+      $new_mappings[$vid] = array(
+        'vocab' => $name, // In case the vocab name has changed. TODO This probably could be omitted.
+        'refine_menu' => $old_mappings[$vid]['menu'],
+        'current_menu' => 0,
+        'mappings' => $old_mappings[$vid]['mappings'],
+      );
+    }
+    else {
+      $new_mappings[$vid] = array(
+        'vocab' => $name,
+        'refine_menu' => 0,
+        'current_menu' => 0,
+        'mappings' => array(),
+      );
+    }
+  }
+
+  // Save updated mappings.
+  variable_set('taxonomy_filter_mappings', $new_mappings);
+
+  return array();
+}
+
+/**
+ * Eliminate the next_id variable.
+ */
+function taxonomy_filter_update_6003() {
+  // Delete the variable.
+  variable_del('taxonomy_filter_next_id');
+
+  return array();
+}
+
+/**
+ * Add default settings for new features in tf_count.
+ */
+function taxonomy_filter_update_6004() {
+  taxonomy_filter_update_default_settings();
+/*
+  // Collect default settings.
+  $settings = array();
+  $modules = module_implements('tf_default_settings');
+  foreach ($modules as $module) {
+    $settings[$module] = module_invoke($module, 'tf_default_settings');
+  }
+
+  // Update settings for each menu.
+  $menus = variable_get('taxonomy_filter_menus', array());
+  foreach ($menus as $id => $menu) {
+    foreach ($modules as $module) {
+      $menus[$id][$module] += $settings[$module];
+    }
+  }
+
+  // Save settings.
+  variable_set('taxonomy_filter_menus', $menus);
+*/
+  return array();
+}
+
+/**
+ * Revert change to feed parameter in default URL to listen on.
+ */
+function taxonomy_filter_update_6005() {
+  // Check input setting.
+  $input = variable_get('taxonomy_filter_input', '');
+  if ($input == 'taxonomy/term/%tids/%depth!feed') {
+    variable_del('taxonomy_filter_input');
+  }
+
+  return array();
+}
+
+/**
+ * Add default settings for new features in tf_multi.
+ */
+function taxonomy_filter_update_6006() {
+  taxonomy_filter_update_default_settings();
+  return array();
+}

@@ -1,0 +1,209 @@
+<?php
+
+/**
+ * @file
+ *
+ * http://developers.facebook.com/docs/user_registration
+ */
+
+
+function _fb_registration_form_alter_fields(&$form) {
+  // name, email and password require special treatment.
+  if (isset($form['name'])) {
+    $form['name']['#fb_registration_field'] = 'name';
+  }
+  if (isset($form['mail'])) {
+    $form['mail']['#fb_registration_field'] = 'email';
+  }
+  /* user_login form needs this
+     $form['pass']['#fb_registration_field'] = array(
+     'name' => 'password',
+     'view' => 'not_prefilled',
+     );
+  */
+  if (isset($form['captcha'])) {
+    $form['captcha']['#fb_registration_field'] = 'captcha';
+  }
+
+  // Because profile module may or may not nest fields in fieldsets, we must recurse.
+  foreach (element_children($form) as $key) {
+    _fb_registration_form_alter_fields($form[$key]);
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function fb_registration_form_alter(&$form, &$form_state, $form_id) {
+
+  if (!isset($GLOBALS['_fb'])) {
+    // Facebook app not configured.  Nothing to do.
+    return;
+  }
+
+  if ($GLOBALS['user']->uid) {
+    // No need to alter user add form.
+    return;
+  }
+
+  if ($form_id == 'user_register') {
+    // Replace regular form with fb_registration.
+    $form['#fb_registration'] = TRUE;
+
+    // Some fields of the registration form require special treatment.
+    _fb_registration_form_alter_fields($form);
+  }
+
+  if (isset($form['#fb_registration'])) {
+    // Registration has been enabled for this form.
+
+    $sr = $GLOBALS['_fb']->getSignedRequest();
+    if ($sr &&
+        ($registration = $sr['registration'])) {
+      // The form has been submitted.  We don't need to alter it.  Instead we
+      // must submit the original form.
+
+      // Captcha is a special case, we can't require it during drupal_execute.
+      $form['captcha'] = NULL;
+
+      if (!isset($form_state['fb_registration_avoid_recursion'])) {
+        $state = array(
+          'fb_registration_avoid_recursion' => TRUE,
+          'values' => $registration,
+          'fb_regisration_values' => $registration, // un-altered values.
+        );
+
+        // Drupal expects strings for some values, not the arrays sent by facebook.
+        foreach ($registration as $key => $value) {
+          if (is_array($value) && $value['name']) {
+            $state['values'][$key] = $value['name']; // Simply for drupal form api.
+          }
+          elseif ($key == 'email' && is_string($value)) {
+            // Drupal expects 'mail', not 'email'.
+            if (!isset($state['values']['mail'])) {
+              $state['values']['mail'] = $value;
+            }
+          }
+        }
+
+        drupal_execute($form_id, $state);
+        // If successful, user will be redirected to another page.
+      }
+      return;
+    }
+
+
+    $fb_fields = array();
+
+    _fb_registration_extract_fb_fields($fb_fields, $form);
+
+    $redirect_url = url(fb_scrub_urls($_REQUEST['q']), array('absolute' => TRUE));
+    $fields = json_encode($fb_fields);
+
+    if (FALSE) {
+      // Use <fb:registration> XFBML.
+      // In testing, I could never get this to work._
+      $attrs = "fields='" . json_encode($fb_fields) . "' redirect-uri='" . url(fb_scrub_urls($_REQUEST['q']), array('absolute' => TRUE)) . "'";
+      $form['fb_registration'] = array(
+        '#type' => 'markup',
+        '#value' => '<fb:registration ' . $attrs . '></fb:registration>',
+      );
+    }
+    else {
+      // Use the iframe markup.
+      $id = $GLOBALS['_fb_app']->id;
+      $url = urlencode($redirect_url);
+      $fields = urlencode($fields);
+      $markup = "<iframe src=http://www.facebook.com/plugins/registration.php?client_id={$id}&redirect_uri={$url}&fields={$fields}
+        scrolling=\"auto\"
+        frameborder=\"no\"
+        style=\"border:none;\"
+        allowTransparency=\"true\"
+        width=\"100%\"
+        height=\"360px\">
+</iframe>";
+
+      $form['fb_registration'] = array(
+        '#type' => 'markup',
+        '#value' => $markup,
+      );
+
+    }
+  }
+
+}
+
+
+function _fb_registration_extract_fb_fields(&$fb_fields, &$form) {
+
+  foreach (element_children($form) as $key) {
+    $field = NULL;
+    if (isset($form[$key]['#fb_registration_field'])) {
+      if (is_string($form[$key]['#fb_registration_field'])) {
+        // This field is a "built in field".
+        $field = array('name' => $form[$key]['#fb_registration_field']);
+      }
+      elseif (is_array($form[$key]['#fb_registration_field'])) {
+        $field = $form[$key]['#fb_registration_field'];
+      }
+    }
+    else {
+      // #fb_registration_field not specified, fallback to the following
+      // code, which translates some drupal form elements into facebook
+      // fields.
+
+      if (!isset($form[$key]['#type'])) {
+        _fb_registration_extract_fb_fields($fb_fields, $form[$key]);
+      }
+      elseif ($form[$key]['#type'] == 'fieldset') {
+        _fb_registration_extract_fb_fields($fb_fields, $form[$key]);
+        $form[$key] = NULL; // So the (now empty?) fieldset will not be rendered.
+      }
+      elseif ($form[$key]['#type'] == 'submit') {
+        // We have to use the register button provided by facebook.
+        $form[$key] = NULL;
+      }
+      elseif ($form[$key]['#type'] == 'textfield') {
+        $field = array(
+          'name' => $key,
+          'type' => 'text',
+          'description' => $form[$key]['#title'],
+        );
+      }
+      elseif ($form[$key]['#type'] == 'textarea') {
+        // Facebook does not offer multi-line text area.  Use single line instead.
+        $field = array(
+          'name' => $key,
+          'type' => 'text',
+          'description' => $form[$key]['#title'],
+        );
+      }
+      elseif ($form[$key]['#type'] == 'checkbox') {
+        $field = array(
+          'name' => $key,
+          'type' => 'checkbox',
+          'description' => $form[$key]['#title'],
+          'default' => isset($form[$key]['#default_value']) ? $form[$key]['#default_value'] : NULL,
+        );
+      }
+      elseif ($form[$key]['#type'] == 'select') {
+        $field = array(
+          'name' => $key,
+          'type' => 'select',
+          'description' => $form[$key]['#title'],
+          'options' => $form[$key]['#options'],
+          'default' => $form[$key]['#default_value'],
+        );
+      }
+
+
+      // @TODO do something intelligent with unknown element types.
+    }
+    if (count($field)) {
+      // Use the facebook field...
+      $fb_fields[] = $field;
+      // and not the drupal field.
+      $form[$key] = NULL;
+    }
+  }
+}

@@ -1,0 +1,13 @@
+; $Id$
+name = "Multi Term"
+description = "Extends Taxonomy Filter allowing filtering by more than two terms."
+dependencies[] = taxonomy_filter
+package = Taxonomy Filter
+core = 6.x
+
+; Information added by drupal.org packaging script on 2011-07-19
+version = "6.x-1.6"
+core = "6.x"
+project = "taxonomy_filter"
+datestamp = "1311102421"
+

@@ -1,0 +1,16 @@
+name = FB Development tools
+description = (fb_devel.module) Catch errors and solve problems before they surprise you.  Displays messages and blocks that help when developing and debugging Apps.  Disable on your production server, when your site is live, because this module adds overhead.
+package = Drupal for Facebook
+dependencies[] = fb
+dependencies[] = devel
+core = 6.x
+
+
+
+
+; Information added by drupal.org packaging script on 2012-04-03
+version = "6.x-3.2"
+core = "6.x"
+project = "fb"
+datestamp = "1333489846"
+

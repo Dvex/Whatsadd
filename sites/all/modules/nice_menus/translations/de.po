@@ -1,0 +1,111 @@
+# German translation of nice_menus (6.x-2.x-dev)
+# Copyright (c) 2010 by the German translation team
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: nice_menus (6.x-2.x-dev)\n"
+"POT-Creation-Date: 2010-09-18 22:49+0200\n"
+"PO-Revision-Date: 2010-09-18 22:50+0100\n"
+"Language-Team: German\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"Last-Translator: Tobias Bähr <info@tobiasbaehr.de>\n"
+"X-Poedit-Language: German\n"
+"X-Poedit-Country: GERMANY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+msgid "Make drop down/flyout CSS menus for site and admin menus."
+msgstr "Erstellt Dropdown CSS/Flyout Menüs für die Seiten- und Administrationsmenus."
+
+msgid "<p>This is a simple module that enables the site to have drop down/flyout CSS menus for site and admin navigation.</p><p>Remember to activate and configure the menu blocks in !link</p>"
+msgstr "<p>Dies ist ein einfaches Modul, um auf der Website CSS/Flyout-Menüs für die Seiten- und Administrationsnavigation zu verwenden </p><p>Unter !link  müssen die Menüs aktiviert und konfiguriert werden</p>"
+
+msgid "Path to custom Nice menus CSS file"
+msgstr "Pfad zur benutzerdefinierten Nice-Menus CSS-Datei"
+
+msgid "To override the default Nice menus CSS layout, enter the path to your custom CSS file.  It should be a relative path from the root of your Drupal install (e.g. sites/all/themes/example/mymenu.css)."
+msgstr "Um das Standard CSS-Layout von Nice-Menus zu überschreiben, trage den Pfad zur CSS-Datei ein. Der Pfad muss relativ zum Wurzelverzeichnis der Drupalinstallation sein (z. B. site/all/themes/example/mymenu.css)."
+
+msgid "The total number of independent Nice menus blocks you want. Enter a number between 0 and 99. If you set this to 0, you will have no blocks created but you can still use the Nice menus theme functions directly in your theme."
+msgstr "Gesamtzahl der unabhängigen Nice-Menus (Blöcke). Eine Zahl zwischen 0 und 99 eingeben. Ist der Wert gleich 0, werden keine Blöcke erstellt, dennoch lassen sich die Theme-Funktionen von Nice-Menus direkt im Theme nutzen."
+
+msgid "Use JavaScript"
+msgstr "JavaScript verwenden"
+
+msgid "This will add Superfish Jquery to Nice menus. This is required for Nice menus to work properly in Internet Explorer."
+msgstr "Dies fügt Superfish-jQuery zu den Nice-Menus hinzu, damit Nice-Menus auch im Internet-Explorer ordnungsgemäß funktioniert."
+
+msgid "Advanced: Superfish options"
+msgstr "Erweitert: Superfish Optionen"
+
+msgid "You can change the default Superfish options by filling out the desired values here. These only take effect if the Use JavaScript box above is checked."
+msgstr "Sie können hier die Standwerte der Superfish-Optionen ändern, indem Sie die gewünschte eintragen. Die Optionen haben nur Auswirkungen, wenn die Option „Javascript verwenden“ aktiviert ist."
+
+msgid "Mouse delay"
+msgstr "Mausverzögerung"
+
+msgid "The delay in milliseconds that the mouse can remain outside a submenu without it closing."
+msgstr "Verzögerung in Millisekunden, die die Maus außerhalb eines Untermenüs ohne dessen Schließung verbleiben kann."
+
+msgid "Animation speed"
+msgstr "Animationsgeschwindigkeit"
+
+msgid "Speed of the menu open/close animation."
+msgstr "Geschwindigkeit der Menübewegung (öffnen und schliessen)"
+
+msgid "slow"
+msgstr "langsam"
+
+msgid "normal"
+msgstr "normal"
+
+msgid "fast"
+msgstr "schnell"
+
+msgid "You must enter a number from 0 to 99."
+msgstr "Es muss eine Zahl zwischen 0 und 99 eingegeben werden."
+
+msgid "Menu Name"
+msgstr "Menüname"
+
+msgid "Menu Parent"
+msgstr "Übergeordnetes Menü"
+
+msgid "The menu parent from which to show a Nice menu."
+msgstr "Das übergeordente Menü von dem ein Nice-Menü angezeigt werden soll."
+
+msgid "Menu Depth"
+msgstr "Menütiefe"
+
+msgid "The depth of the menu, i.e. the number of child levels starting with the parent selected above. Leave set to -1 to display all children and use 0 to display no children."
+msgstr "Die Tiefe des Menüs, z. B. die Anzahl der Unterebenen beginnend ab dem übergeordneten Menü, der oben ausgewählt wurde. Um alle Ebenen anzuzeigen, muss die Option „-1“ ausgewählt werden und für keine Unterebenen anzugeigen die Option „0“."
+
+msgid "Menu Style"
+msgstr "Menüstil"
+
+msgid "right: menu items are listed on top of each other and expand to the right"
+msgstr "Rechts: Menüpunkte werden übereinander und nach Rechts erweitert dargestellt"
+
+msgid "left: menu items are listed on top of each other and expand to the left"
+msgstr "Links: Menüpunkte werden übereinander und nach Links erweitert dargestellt"
+
+msgid "down: menu items are listed side by side and expand down"
+msgstr "Unten: Menüpunkte werden nebeneinander aufgelistet und nach unten erweitert"
+
+msgid "Navigation"
+msgstr "Navigation"
+
+msgid "Nice menus"
+msgstr "Nice Menus"
+
+msgid "Configure Nice menus."
+msgstr "Nice-Menus konfigurieren."
+
+msgid "Nice Menus"
+msgstr "Nice Menus"
+
+msgid "CSS/jQuery drop-down, drop-right and drop-left menus to be placed in blocks"
+msgstr "CSS/JQuery Dropdown: Dropdown (Rechts und Links) werden in Blöcken platziert"
+

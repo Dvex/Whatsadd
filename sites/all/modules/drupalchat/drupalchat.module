@@ -1,0 +1,388 @@
+<?php 
+/**
+ * @file
+ * Module code for DrupalChat.
+ */
+
+define('DRUPALCHAT_AJAX', 0);
+define('DRUPALCHAT_LONGPOLL',    1);
+define('DRUPALCHAT_NODEJS',    2);
+//define('DRUPALCHAT_APE',    2);
+
+define('DRUPALCHAT_USER_OFFLINE',    0);
+define('DRUPALCHAT_USER_ONLINE',    1);
+define('DRUPALCHAT_USER_IDLE',    2);
+
+define('DRUPALCHAT_REL_AUTH',    0);
+define('DRUPALCHAT_REL_UR',    1);
+define('DRUPALCHAT_REL_FF',    2);
+
+/**
+ * Implementation of hook_help().
+ */
+function drupalchat_help($path, $arg) {
+	if ($path == 'admin/help#drupalchat') {
+		return '<p>' . t('Provides one on one chat.') . '</p>';
+	}
+}
+/**
+ * Implementation of hook_perm().
+ */
+function drupalchat_perm() {
+  return array('administer drupalchat', 'access drupalchat');
+}
+
+/**
+ * Implementation of hook_footer().
+ */
+function drupalchat_footer() {
+  global $user;
+  if (user_access('access drupalchat')) {
+    return theme('drupalchat');
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function drupalchat_theme() {
+  return array(
+    'drupalchat' => array(
+      'template' => 'drupalchat',
+    ),
+    'drupalchat_subpanel' => array(
+      'arguments' => array('subpanel' => NULL),
+    	'template' => 'drupalchat-subpanel',
+    ),  
+  );
+}
+
+function drupalchat_preprocess_drupalchat(&$variables) {
+	$modules = module_invoke_all('drupalchat_subpanel');
+	
+  $items = array();
+  $items[] = array('data' => _drupalchat_chat(), 'id' => 'chatpanel');
+  foreach ($modules as $module) {
+  	$items[] = array('data' => theme('drupalchat_subpanel', $module), 'id' => $module['name']);
+  }
+  
+ 	$variables['subpanels'] = theme('item_list', $items, NULL, 'ul', array('id' => 'mainpanel'));
+}
+
+function _drupalchat_chat() {
+	global $user;
+	
+	$chat = array();
+	$chat['name'] = 'chat';
+	$chat['header'] = t('Chat');
+	
+	$buddylist = _drupalchat_buddylist($user->uid);
+  $buddylist_online = _drupalchat_buddylist_online($buddylist);
+  
+  $chat['contents'] = '<div class="chat_options">';
+  $chat['contents'] .= '<a class="options" href="#">' . t('Options') . '</a>';  
+  $chat['contents'] .= '<a class="chat_loading" href="#"></a>';
+  $chat['contents'] .= '</div>';  
+  
+  $items = array();
+  foreach ($buddylist_online as $key => $value) {
+  	if ($key != 'total') {
+      $items[] = array('data' => '<a class="' . $key . '" href="#">' . $value['name'] . '</a>', 'class' => 'status-' . $value['status']);
+  	}
+  }
+  if ($items) {
+  	$chat['contents'] .= theme('item_list', $items);
+  }
+  else {
+  	$chat['contents'] .= theme('item_list', array(array('data' => l(t('No users online'), 'user'), 'class' => 'link')));
+  }
+  $chat['text'] = t('Chat') . ' (<span class="online-count">' . count($items) . '</span>)';
+  
+  $theme = variable_get('drupalchat_theme', 'light');
+  $chat['icon'] = theme('image', drupal_get_path('module', 'drupalchat') . '/themes/' . $theme . '/images/loading.gif', NULL, NULL, array('class' => 'icon'));
+  	
+	return theme('drupalchat_subpanel', $chat);	
+}
+
+/**
+* Implementaiton of hook_menu()
+*/
+function drupalchat_menu() {
+	$items['admin/settings/drupalchat'] = array(
+    	'title' => 'DrupalChat',
+    	'description' => 'Administer DrupalChat',	
+    	'page callback' => 'drupal_get_form',
+    	'page arguments' => array('drupalchat_settings_form'),
+    	'access arguments' => array('administer drupalchat'),	
+    	'file' => 'drupalchat.admin.inc',
+    );
+	$items['drupalchat/poll'] = array(
+		'page callback' => 'drupalchat_poll',
+		'access arguments' => array('access drupalchat'),
+		'type' => MENU_CALLBACK,
+	);
+	$items['drupalchat/send'] = array(
+		'page callback' => 'drupalchat_send',
+		'access arguments' => array('access drupalchat'),
+		'type' => MENU_CALLBACK,
+	);
+  $items['drupalchat/status'] = array(
+    'page callback' => 'drupalchat_status',
+    'access arguments' => array('access drupalchat'),
+    'type' => MENU_CALLBACK,
+  );	
+	return $items;
+}
+
+/**
+* Implementaiton of hook_cron()
+*/	
+function drupalchat_cron() {
+	db_query('DELETE FROM {drupalchat_msg} WHERE timestamp < %d', (time() - 10));
+	db_query('DELETE FROM {drupalchat_users} WHERE timestamp < %d', (time() - 10));
+}
+
+/**
+ * Implementation of hook_user()
+ */
+function drupalchat_user($op, &$edit, &$account, $category = NULL) {
+	switch ($op) {
+		case 'login':
+			setcookie("DRUPALCHAT_NEWLOGIN", 1, time()+120); 
+			db_query('DELETE FROM {drupalchat_msg} WHERE uid1 = uid2 AND uid1 = %d', $account->uid);
+			break;
+	}
+}
+
+function drupalchat_init() {    
+  if(user_access('access drupalchat')) {
+  	global $user;
+  	       
+		$status = db_result(db_query('SELECT status FROM {drupalchat_users} WHERE uid = %d', $user->uid));
+		if (!$status) {
+			$status = DRUPALCHAT_USER_ONLINE;
+		  $current_user = (object) array(
+	      'uid' => $user->uid,
+		    'session' => $user->sid,
+	      'name' => $user->name,
+	      'status' => $status,
+	      'timestamp' => time(),
+	    );
+			drupal_write_record('drupalchat_users', $current_user);
+		}
+		else {
+			db_query('UPDATE {drupalchat_users} SET timestamp = %d, status = %d WHERE uid = %d', time(), ($status == DRUPALCHAT_USER_OFFLINE ? DRUPALCHAT_USER_ONLINE : $status), $user->uid);
+		}	 
+		
+		$theme = variable_get('drupalchat_theme', 'light'); 
+		
+    $polling_method = variable_get('drupalchat_polling_method', DRUPALCHAT_LONGPOLL);
+            
+    $my_settings = array(
+      'username' => $user->name,
+      'uid' => $user->uid,
+      'current_timestamp' => time(),
+      'polling_method' => $polling_method,
+      'pollUrl' => url('drupalchat/poll', array('absolute' => TRUE)),
+      'sendUrl' => url('drupalchat/send', array('absolute' => TRUE)),
+      'statusUrl' => url('drupalchat/status', array('absolute' => TRUE)),
+      'status' => $status,
+      'goOnline' => t('Go Online'),
+      'goIdle' => t('Go Idle'),
+      'newMessage' => t('New chat message!'),
+      'images' => base_path() . drupal_get_path('module', 'drupalchat') .'/themes/' . $theme . '/images/',
+      'sound' => base_path() . drupal_get_path('module', 'drupalchat') .'/swf/sound.swf',
+      'noUsers' => theme('item_list', array((t('No users online')))),
+      'smileyURL'=> base_path() . drupal_get_path('module', 'drupalchat') .'/smileys/very_emotional_emoticons-png/png-32x32/',
+      'profilePath' => url('user', array('absolute' => TRUE)),
+    );
+    if ($polling_method == DRUPALCHAT_AJAX) {
+      $my_settings['refresh_rate'] = variable_get('drupalchat_refresh_rate', 2);
+      $my_settings['send_rate'] = variable_get('drupalchat_send_rate', 2);
+    }   		
+    drupal_add_js(array('drupalchat' => $my_settings), "setting");
+    drupal_add_js(drupal_get_path('module', 'drupalchat') . '/js/swfobject.js', 'module');
+  	if (variable_get('drupalchat_yui_path',NULL)) {
+    	drupal_add_js(drupalchat_yui_path(). '/yui-min.js', 'module');
+  	}
+    drupal_add_js(drupal_get_path('module', 'drupalchat') . '/js/storage-lite.js', 'module');
+    drupal_add_js(drupal_get_path('module', 'drupalchat') . '/js/jquery.titlealert.min.js', 'module');
+    drupal_add_js(drupal_get_path('module', 'drupalchat') . '/js/drupalchat.js', 'module');
+    drupal_add_js(drupal_get_path('module', 'drupalchat') . '/js/ba-emotify.js', 'module');
+    drupal_add_css(drupal_get_path('module', 'drupalchat') . '/themes/' . $theme . '/' . $theme . '.css', 'module');
+        
+//    drupal_add_js(drupal_get_path('module', 'drupalchat') . '/js/ba-emotify.js');		
+  }
+}
+
+function _drupalchat_touch_user($uid) {
+	db_query('UPDATE {drupalchat_users} SET timestamp = %d WHERE uid = %d', time(), $uid);
+}
+
+/**
+* Send messages via ajax
+*/
+function drupalchat_send() {
+	global $user;
+	$message = (object) array(
+  		'uid1' => $user->uid,
+  		'uid2' => check_plain($_POST['drupalchat_uid2']),
+  		'message' => check_plain($_POST['drupalchat_message']),
+  		'timestamp' => time(),	
+	);
+	drupal_write_record('drupalchat_msg', $message);
+	drupal_json(array());
+}
+
+/**
+* Alter status via ajax
+*/
+function drupalchat_status() {
+  global $user;
+  db_query("UPDATE {drupalchat_users} SET status = %d WHERE uid = %d", check_plain($_POST['status']), $user->uid);
+  drupal_json(array());
+}
+
+/**
+* Process and get messages
+*/
+function drupalchat_poll() {
+	global $user;
+	
+	$initial_time = time();
+	if($_POST['drupalchat_last_timestamp'] > 0) {
+		$last_timestamp = check_plain($_POST['drupalchat_last_timestamp']);
+	}
+	else {
+		$last_timestamp = $initial_time;
+	}
+	
+	$buddylist = _drupalchat_buddylist($user->uid);
+	$buddylist_online_old = _drupalchat_buddylist_online($buddylist);
+	
+	$polling_method = variable_get('drupalchat_polling_method', DRUPALCHAT_LONGPOLL);
+
+	if ($polling_method == DRUPALCHAT_AJAX) {
+	  $messages = db_query('SELECT u.name, m.uid1, m.uid2, m.message, m.timestamp FROM {drupalchat_msg} m INNER JOIN {users} u ON m.uid1 = u.uid WHERE m.uid2 = %d AND m.timestamp > %d ORDER BY m.timestamp ASC', $user->uid, $last_timestamp);
+	  _drupalchat_touch_user($user->uid);
+	  module_invoke_all('drupalchat_ajaxpoll'); // AJAX poll hook
+	}
+	elseif ($polling_method == DRUPALCHAT_LONGPOLL) {
+	  do {
+	    sleep(3);
+	    $checkUnlog="SELECT timestamp FROM {sessions} WHERE sid='%s' AND uid =0";
+	    $result=db_query($checkUnlog, $user->sid);
+	    $filas = db_affected_rows($result);
+	    if ($filas!=0) {
+	      $user->uid=0;
+	      exit(1);
+	    }
+	    $buddylist_online = _drupalchat_buddylist_online($buddylist);
+	    $message_count = db_result(db_query('SELECT COUNT(*) FROM {drupalchat_msg} m INNER JOIN {users} u ON m.uid1 = u.uid WHERE m.uid2 = %d AND m.timestamp > %d', $user->uid, $last_timestamp));
+	    _drupalchat_touch_user($user->uid);
+      module_invoke_all('drupalchat_longpoll'); // Long poll hook
+	  } while(((time() - $initial_time) < (ini_get('max_execution_time') - 5)) && ($message_count == 0) && (_drupalchat_buddylist_diff($buddylist_online_old, $buddylist_online)));
+	}
+	
+  $json['messages'] = array();
+  if ($message_count > 0) {
+    $messages = db_query('SELECT u.name, m.uid1, m.uid2, m.message, m.timestamp FROM {drupalchat_msg} m INNER JOIN {users} u ON m.uid1 = u.uid WHERE m.uid2 = %d AND m.timestamp > %d ORDER BY m.timestamp ASC', $user->uid, $last_timestamp);
+  }
+    
+    while ($message = db_fetch_object($messages)) {
+      $json['messages'][] = array('message' => $message->message, 'timestamp' => date("H:i", $message->timestamp), 'uid1' => $message->uid1, 'name' => $message->name);
+      if($message->timestamp > $last_timestamp) {
+        $last_timestamp = $message->timestamp;
+      }
+    }
+  
+  
+  $json['total_messages'] = $message_count;
+  $json['last_timestamp'] = $last_timestamp;
+  $json['buddylist'] = $buddylist_online ? $buddylist_online : $buddylist_online_old;
+  
+  drupal_json($json);
+}
+
+function _drupalchat_buddylist($uid) {	
+  $users = array();
+  $drupalchat_rel = variable_get('drupalchat_rel', DRUPALCHAT_REL_AUTH);
+  if ($drupalchat_rel == DRUPALCHAT_REL_UR) {
+    $relationships = user_relationships_load(array('name' => variable_get('drupalchat_ur_name', 'friend'), 'user' => $uid, 'approved' => 1), array(), TRUE);
+	  foreach ($relationships AS $rid => $relationship) {
+	    $uid == $relationship->requester_id ? $users[] = $relationship->requestee_id : $users[] = $relationship->requester_id;
+	  }
+  }
+  elseif ($drupalchat_rel == DRUPALCHAT_REL_FF) {
+    $result = db_query("SELECT * FROM {flag_friend} WHERE uid = %d OR friend_uid = %d", $uid, $uid);
+    while ($friend = db_fetch_object($result)) {
+      $uid == $friend->uid ? $users[] = $friend->friend_uid : $users[] = $friend->uid;
+    }
+  }
+  
+	return $users;
+}
+
+function _drupalchat_buddylist_online($buddylist) {
+	global $user;
+	
+	$users = array();	 
+  if (variable_get('drupalchat_rel', DRUPALCHAT_REL_AUTH) > DRUPALCHAT_REL_AUTH) {
+    // Return empty on an empty buddylist
+    if (empty($buddylist)) {
+      $users['total'] = 0;
+      return $users;
+    }
+
+    foreach ($buddylist as $uid) {
+      $where[] = 'uid = %d';
+      $args[] = $uid;
+    }  	
+   
+    $result = db_query('SELECT uid, name, status FROM {drupalchat_users} WHERE timestamp >= ' . (time() - 5) . ' AND (' . implode(' OR ', $where) . ') ORDER BY status, name', $args);
+  }
+  else {
+    $result = db_query('SELECT uid, name, status FROM {drupalchat_users} WHERE timestamp >= %d AND uid <> %d ORDER BY status, name', (time() - 10), $user->uid);
+  }
+  
+  while ($buddy = db_fetch_object($result)) {
+    $users[$buddy->uid] = array('name' => $buddy->name, 'status' => $buddy->status);
+  }
+  $users['total'] = count($users);
+  
+  return $users;
+}
+
+function _drupalchat_buddylist_diff($ar1, $ar2) {
+	if ($ar1['total'] != $ar2['total']) {
+		return FALSE;
+	}
+	
+	foreach ($ar1 as $key => $value) {
+		if (!isset($ar2[$key])) {
+			return FALSE;
+		}
+		if ($value['status'] != $ar2[$key]['status']) {
+			return FALSE;
+		}
+	}
+	
+	return TRUE;
+}
+function drupalchat_library_path($variable, $match, $filename) {
+  module_load_include('inc', 'dxmpp', 'includes/dxmpp.admin');
+  $path = _drupalchat_autodiscover_path($match, $filename);
+  variable_set($variable, $path);
+  return $path;
+}
+function drupalchat_yui_path($reset = FALSE) {
+  static $path;
+
+  if (!isset($path) || $reset) {
+    if (!($path = variable_get('drupalchat_yui_path',NULL)) || $reset) {
+      $path = drupalchat_library_path('drupalchat_yui_path', '^yui-min\.js$', 'yui-min.js');
+    }
+  }
+
+  return $path;
+}

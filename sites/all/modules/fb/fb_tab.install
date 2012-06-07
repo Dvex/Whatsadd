@@ -1,0 +1,74 @@
+<?php
+
+/**
+ * @file
+ * Installs database tables and settings required by fb_tab module.
+ *
+ */
+
+/**
+ * hook_install()
+ */
+function fb_tab_install() {
+  // Create tables.
+  drupal_install_schema('fb_tab');
+
+  drupal_set_message(st('Facebook Tab module installed.', array('!perm' => url('admin/user/permissions'), '!create' => url('admin/build/fb') /* FB_PATH_ADMIN */)));
+}
+
+/**
+ * hook_uninstall()
+ */
+function fb_tab_uninstall() {
+  // Remove tables.
+  drupal_uninstall_schema('fb_tab');
+}
+
+function fb_tab_schema() {
+  $schema['fb_tab'] = array(
+    'description' => 'Main fb_tab table. Presents tabs to user and manages configuration data for different tab views.',
+    'fields' => array(
+      'fb_tab_id' => array(
+        'description' => 'The primary identifier.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'label' => array(
+        'description' => 'Facebook application label.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => ''),
+      'profile_id' => array(
+        'description' => 'profile id (which tab is calling)',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE),
+      'created' => array(
+        'description' => 'The Unix timestamp when the row was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0),
+      'data' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'description' => 'Serialized generic data.',
+        'default' => NULL,
+      ),
+    ),
+    'primary key' => array('fb_tab_id'),
+    'unique keys' => array(
+      'fb_tab' => array('label', 'profile_id'),
+    ),
+  );
+
+  return $schema;
+}
+
+function fb_tab_update_6300() {
+  $ret = array();
+  // introducing fb_tab table.
+  $schema = fb_tab_schema();
+  db_create_table($ret, 'fb_tab', $schema['fb_tab']);
+  return $ret;
+}

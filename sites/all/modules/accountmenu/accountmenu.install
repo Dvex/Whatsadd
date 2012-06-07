@@ -1,0 +1,61 @@
+<?php
+/**
+ * @file accountmenu.install
+ * accountmenu module install/uninstall
+ */
+
+
+function accountmenu_install() {
+  $t = get_t();
+  db_query("INSERT INTO {menu_custom} (menu_name, title, description) VALUES ('%s', '%s', '%s')", 'accountmenu', $t('Account menu'), $t('Account menu links.'));
+
+  include_once('accountmenu.module');
+  _accountmenu_setup_menu();
+
+  drupal_set_message($t('Account menu is installed, go to <a href="@help">help</a> for instructions.',
+                        array('@help' => url('admin/help/accountmenu'),
+                              )), 'status');
+}
+
+
+
+function accountmenu_uninstall() {
+  variable_del('accountmenu_menu_name');
+
+  include_once('accountmenu.module');
+  _accountmenu_delete_menu();
+
+  db_query("DELETE FROM {menu_custom} WHERE menu_name = 'accountmenu'");
+}
+
+
+
+function accountmenu_update_6100() {
+  include_once('accountmenu.module');
+  _accountmenu_reset_menu();
+  $t = get_t();
+  drupal_set_message($t('Account menu has been reset to enable new features, any customization you may have made is lost, please re-do at <a href="@url">settings</a>.',
+                         array('@help' => url('admin/settings/accountmenu'),
+                              )), 'status');
+  return array();
+}
+
+
+function accountmenu_update_6101() {
+  include_once('accountmenu.module');
+  _accountmenu_reset_menu();
+  $t = get_t();
+  drupal_set_message($t('Account menu has been reset to enable new features, any customization you may have made is lost, please re-do at <a href="@url">settings</a>.',
+                         array('@help' => url('admin/settings/accountmenu'),
+                              )), 'status');
+  return array();
+}
+
+
+function accountmenu_update_6102() {
+  $t = get_t();
+  drupal_set_message($t('Accountmenu module: the !name and !realname tokens have been deprecated, please use @name and @realname instead.'),
+                     'warning');
+
+  return array();
+}

@@ -1,0 +1,233 @@
+<?php
+
+/**
+ * @file
+ * This module manages relations between local Drupal user accounts
+ * and their accounts on facebook.com by application.
+ *
+ * Drupal refers to a local user id as 'uid'.  Facebook's documentation
+ * and code also uses 'uid'.  In these modules we use 'fbu' for facebook's
+ * id and 'uid' for Drupal's id.
+ */
+
+define('FB_USER_APP_VAR_TRACK_EVERY_PAGE', 'fb_user_app_track_every_page');
+define('FB_USER_APP_VAR_USERS_THAT_GRANT_OFFLINE', 'fb_user_app_users_that_grant_offline');
+define('FB_USER_APP_VAR_TRACK_USERS', 'fb_user_app_track_users');
+define('FB_USER_APP_VAR_TRACK_PAGES', 'fb_user_app_track_pages');
+
+//// Menu structure.
+/**
+ * Implementation of hook_menu().
+ */
+function fb_user_app_menu() {
+  $items = array();
+
+  // Admin pages overview.
+  $items[FB_PATH_ADMIN . "/tracking"] = array(
+    'title' => 'Tracking',
+    'description' => 'Settings that track statistics in Drupal for Facebook',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fb_user_app_admin_settings'),
+    'access arguments' => array(FB_PERM_ADMINISTER),
+    'file' => 'fb_user_app.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_fb()
+ */
+function fb_user_app_fb($op, $data, &$return) {
+  $fb_app = isset($data['fb_app']) ? $data['fb_app'] : NULL;
+  $fb = isset($data['fb']) ? $data['fb'] : NULL;
+
+  global $user;
+
+  if ($op == FB_OP_APP_IS_AUTHORIZED &&
+      variable_get(FB_USER_APP_VAR_TRACK_EVERY_PAGE, FALSE)) {
+
+    // This hook is called on every page request, if the user has authorized
+    // the app/page and permission has been granted in the settings. We used
+    // to create accounts and maps here.  That code is now
+    // in FB_OP_AJAX_EVENT, because it turns out this hook is invoked even on
+    // page not found and access denied pages.
+
+    fb_user_app_track_user($fb, $fb_app, $user);
+  }
+  elseif ($op == FB_APP_OP_EVENT) {
+
+    // Facebook has notified us of some event.
+    // We handle some of the events here.
+    $event_type = $data['event_type'];
+
+    // Ensure fb_user_app table accurately reflects whether user has authorized.
+    if ($event_type == FB_APP_EVENT_POST_AUTHORIZE) {
+      // Track new facebook user, $GLOBAL['user'] not valid dufing post-autorize.
+      fb_user_app_track_user($fb, $fb_app);
+    }
+    elseif ($event_type == FB_APP_EVENT_POST_REMOVE) {
+      $fbu = fb_settings(FB_SETTINGS_FBU);
+      // User has removed the app from their account.
+      db_query("DELETE FROM {fb_user_app} WHERE apikey='%s' AND fbu=%d",
+               $fb_app->apikey, $fbu);
+    }
+  }
+  elseif ($op == FB_OP_GET_USER_SESSION) {
+
+    // The fb module is asking for session login information.  For example, to
+    // log in as the user when not on a canvas page.  This module may be able
+    // to provide it, depending on whether the user has logged in, and whether
+    // the session has expired.
+    $fbu = $data['fbu'];
+    $result = db_query("SELECT * FROM {fb_user_app} WHERE apikey = '%s' and fbu = %d", $fb_app->apikey, $fbu);
+    $data = db_fetch_object($result);
+
+    if ($data && $data->session_key)
+      // Return array with FB id and apikey.
+      $return = array(
+        'fbu' => $data->fbu,
+        'access_token' => $data->session_key,
+        'expires' => $data->session_key_expires,
+      );
+  }
+  elseif ($op == FB_OP_AJAX_EVENT) { // handle internal login
+    // @TODO - global user is not correct here.
+
+    // fb.js has notified us of an event via AJAX.  Not the same as facebook event callback above.
+    if ($data['event_type'] == 'session_change' && isset($data['event_data']['fbu'])) {
+      // A user has logged in.
+      fb_user_app_track_user($fb, $fb_app, $user);
+    }
+  }
+}
+
+/**
+ * Implements hook_user().
+ *
+ * @TODO confirm there is no race condition between this module and fb_user.
+ * That is, during delete, does fb_get_fbu() still work?
+ */
+function fb_user_app_user($op, &$edit, &$account, $category = NULL) {
+  if ($op == 'delete') {
+    // Given the uid, fetch the fbu so that we can delete
+    $fbu = fb_get_fbu($account->uid);
+    db_query('DELETE FROM {fb_user_app} WHERE fbu=%d', $fbu);
+  }
+}
+
+/**
+ * Keep track of when the user has visited the app.
+ *
+ * Historically we could learn a user's ID even if they hadn't authorized
+ * ("added") the app.  No longer the case, so all entries in fb_user_app
+ * should be for authorized users.
+ *
+ * A "signed request" should be fully-formed (have an oauth_token) on canvas
+ * pages, and on post authorize events (for as long as facebook continues to
+ * support them).  So this tracking will work best for canvas page apps and
+ * less reliably for connect.
+ */
+function fb_user_app_track_user($fb, $fb_app) {
+  // Coming from a user adding the app or a page adding the app?
+  $fb_user_type = "user";
+  $fbu = fb_facebook_user($fb);
+  if (array_key_exists('fb_sig_page_added', $_REQUEST)) {
+    // It's a post-authorize event for app added to page.
+    $fb_user_type = "page";
+    $fbu = $_REQUEST['fb_sig_page_id'];
+  }
+
+  $sr = $fb->getSignedRequest();
+  //watchdog('fb_user_app', __FUNCTION__ . " signed request is <pre>" . print_r($sr,1) . "</pre>"); // debug
+
+  if (isset($sr['oauth_token'])) {
+    $access_token = $sr['oauth_token'];
+    $expires = $sr['expires'];
+    $fbu = $sr['user_id'];
+  }
+  else {
+    // @TODO: with new SDK, is there any useful tracking info?
+    return;
+  }
+
+
+  // when 'expires' == 0 app has been granted offline access
+  if ($fb_user_type == 'user' &&
+      $expires <> 0 &&
+      variable_get(FB_USER_APP_VAR_USERS_THAT_GRANT_OFFLINE, FALSE)) {
+    // Note, with new SDK, facebook provides 'expires' date even when user HAS GRANTED offline_access!
+    // @TODO: find some way to tell whether an access token will actually expire!
+    return;
+  }
+
+  // Track this event only if allowed to and only for users, not pages
+  if ((variable_get(FB_USER_APP_VAR_TRACK_USERS, TRUE) && $fb_user_type = "user") ||
+      (variable_get(FB_USER_APP_VAR_TRACK_PAGES, TRUE) && $fb_user_type = "page")) {
+
+    $result = db_query("UPDATE {fb_user_app} SET time_access=%d, session_key='%s', session_key_expires=%d, user_type='%s' WHERE apikey='%s' AND fbu=%d",
+                       time(),
+                       $access_token, $expires,
+                       $fb_user_type,
+                       $fb_app->id,
+                       $fbu);
+
+    if ($result && !db_affected_rows()) {
+      // The row for this user was never inserted, or it was deleted, or the times were the same.
+      if ($fbu) {
+        // First make sure it was not just the same time
+        $result = db_query("SELECT * FROM {fb_user_app} WHERE apikey='%s' AND fbu=%d",
+                           $fb_app->apikey,
+                           $fbu);
+        if (!db_fetch_object($result)) {
+          //This row does not exist, even with the same time.  Insert now
+          $info = fb_users_getInfo(array($fbu), $fb);
+          $data = $info[0];
+          $fb_user_type = "user";
+          $result = db_query("INSERT INTO {fb_user_app} (apikey, fbu, added, user_type, session_key, session_key_expires, time_access, proxied_email, time_cron) VALUES ('%s', %d, %d, '%s', '%s', %d, %d, '%s', %d)",
+                             $fb_app->apikey, $fbu,
+                             $data['is_app_user'],
+                             $fb_user_type,
+                             $access_token,
+                             $expires,
+                             time(),
+                             $data['proxied_email'],
+                             0 // time_cron
+          );
+        }
+      }
+    }
+    if ($result === FALSE) {
+      watchdog('fb_user_app', "Failed to update fb_user_app table.", array(), WATCHDOG_ERROR);
+    }
+  }
+}
+
+/**
+ * Learn the user's proxied email address.
+ *
+ */
+function fb_user_app_get_proxied_email($fbu, $fb_app) {
+  // Try to learn from local database
+  $result = db_query("SELECT * FROM {fb_user_app} WHERE apikey='%s' AND fbu=%d",
+                     $fb_app->apikey,
+                     $fbu);
+  if ($data = db_fetch_object($result)) {
+    $mail = $data->proxied_email;
+  }
+
+  if (!isset($mail) || !$mail) {
+    // Ask facebook for info.
+    $fb = fb_api_init($fb_app);
+    $info = fb_users_getInfo(array($fbu), $fb);
+    $data = $info[0];
+    $mail = $data['proxied_email'];
+    if ($mail && variable_get(FB_USER_APP_VAR_TRACK_USERS, TRUE)) {
+      // Store locally.
+      $result = db_query("UPDATE {fb_user_app} SET proxied_email='%s' WHERE apikey='%s' AND fbu=%d",
+                         $mail, $fb_app->apikey, $fbu);
+    }
+  }
+  return $mail;
+}

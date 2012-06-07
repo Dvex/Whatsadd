@@ -1,0 +1,234 @@
+<?php
+/**
+ * @file
+ * Code pertaining to Facebook's extended permissions.
+ * see http://wiki.developers.facebook.com/index.php/Extended_permissions
+ */
+
+function fb_permission_perm() {
+  return array('edit own extended permissions');
+}
+
+/**
+ * Helper function for menu item access check.
+ */
+function fb_permission_access_own($account, $perm) {
+  if (fb_facebook_user())
+    return ($GLOBALS['user']->uid == $account->uid && user_access($perm));
+}
+
+/**
+ * Which permissions can we prompt for?
+ *
+ * @TODO - update this list and/or make it customizable.
+ */
+function fb_permission_map($fb) {
+  static $perms;
+
+  // http://developers.facebook.com/docs/reference/fql/permissions_info
+  $result = fb_fql_query($fb, "SELECT permission_name, header, summary FROM permissions_info WHERE 1", // FQL, no {curly_brackets}
+                         array('access_token' => fb_get_token($fb)));
+
+  if (!isset($perms)) {
+    foreach ($result as $data) {
+      $perms[$data['permission_name']] = 'Allow %application to ' . strtolower($data['summary'] ? $data['summary'] : 'access ' . $data['header']);
+    }
+  }
+  return $perms;
+}
+
+/**
+ * Implements hook_fb_required_perms_alter().
+ *
+ * fb_connect.module can calls this to learn when perms to add to login-button.
+ */
+function fb_permission_fb_required_perms_alter(&$perms) {
+  global $_fb, $_fb_app;
+  $fb_app_data = fb_get_app_data($_fb_app);
+  if (isset($fb_app_data['fb_permission'])) {
+    $fb_permission_data = $fb_app_data['fb_permission'];
+
+    foreach ($fb_permission_data['prompt'] as $key => $value) {
+      if ($value) {
+        $perms[$key] = $key;
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_user.
+ */
+function fb_permission_user($op, &$edit, &$account, $category = NULL) {
+  global $user;
+  if ($op == 'categories') {
+    $items = array();
+    // A tab for each application
+    foreach (fb_get_all_apps() as $fb_app) {
+      // TODO: limit only to apps which can be added to a user's account.
+      $items[] = array(
+        'name' => $fb_app->label,
+        'title' => $fb_app->title,
+        'access callback' => 'fb_permission_access_own',
+        'access arguments' => array(1, 'edit own extended permissions'),
+        'weight' => 2);
+    }
+    return $items;
+  }
+  elseif ($op == 'form') {
+    // See if the category corresponds to a facebook app.
+    $fb_app = fb_get_app(array('label' => $category));
+
+    if ($fb_app) {
+      $fb = fb_api_init($fb_app);
+      $map = fb_permission_map($fb); // All known permissions.
+
+      // Show only permissions we've configured for this app.
+      $fb_app_data = fb_get_app_data($fb_app);
+      $fb_permission_data = $fb_app_data['fb_permission'];
+      if (is_array($fb_permission_data['map'])) {
+        foreach ($fb_permission_data['map'] as $key => $value) {
+          if (!$value)
+            unset($map[$key]);
+        }
+      }
+
+      /* Should not be necessary to wrap in serverfbml, as prompt-permission is documented as XFBML.
+      $form = array(
+        'perms' => array(
+          '#prefix' => '<fb:serverfbml><script type="text/fbml><fb:fbml>',
+          '#suffix' => '</fb:fbml></script></fb:serverfbml>',
+        ),
+      );
+      */
+
+      $t_args = array('%application' => $fb_app->title);
+      $weight = 0;
+      foreach ($map as $key => $text) {
+        $has_perm = FALSE;
+        try {
+          $has_perm = fb_call_method($fb, 'users.hasAppPermission', array(
+                                       'ext_perm' => $key,
+                                       'uid' => fb_get_fbu($account->uid, $fb_app),
+                                     ));
+
+        } catch (Exception $e) {
+          fb_log_exception($e, t('Call to users.hasAppPermission(%key) failed.', array('%key' => $key)));
+        }
+        if (!$has_perm) {
+          if ('facebook has fixed fb:prompt-permission bugs' == FALSE) {
+            // Ideally, fb:prompt-permission would work.  But it doesn't.
+            $form['perms'][$key] = array(
+              '#type' => 'markup',
+              '#value' => '<fb:prompt-permission perms="' . $key . '">' . t($text, $t_args) . '</fb:prompt-permission>',
+              '#weight' => $weight++,
+              '#suffix' => "<br/>\n",
+            );
+          }
+          else {
+            // Send user to facebook's extended permission page.
+            // This is weak.  Would be better to use javascript or fb:prompt-permission.
+            $url = url($_GET['q'], array('absolute' => TRUE));
+            $form['perms'][$key] = array(
+              '#type' => 'markup',
+              '#value' => l(t($text, $t_args), "http://www.facebook.com/authorize.php", array(
+                              'html' => TRUE,
+                              'query' => "api_key={$fb_app->apikey}&v=1.0&ext_perm={$key}&next={$url}&next_cancel={$url}",
+                            )),
+              '#prefix' => '<p>',
+              '#suffix' => '</p>',
+              '#weight' => $weight++,
+            );
+          }
+        }
+      }
+      $form['description'] = array(
+        '#type' => 'markup',
+        '#value' => l(t('All settings for %application (and other Facebook Applications).', array('%application' => $fb_app->title)),
+                      'http://www.facebook.com/editapps.php',
+                      array('html' => TRUE)),
+        '#prefix' => '<p>',
+        '#suffix' => "</p>\n",
+        '#weight' => $weight++,
+      );
+      // A value for hook_form_alter to find.
+      $form['_fb_permission'] = array('#type' => 'value',
+                                      '#value' => TRUE);
+      return $form;
+    }
+
+  }
+
+}
+
+function fb_permission_form_alter(&$form, $state, $id) {
+  //dpm(func_get_args(), 'fb_permission_form_alter');
+  if ($id == 'user_profile_form' && isset($form['_fb_permission'])) {
+    unset($form['submit']);
+    unset($form['delete']);
+  }
+
+  // Add settings to fb_app form
+  if (isset($form['fb_app_data'])) {
+    $fb_app = $form['#fb_app'];
+    $fb = fb_api_init($fb_app);
+    $fb_app_data = fb_get_app_data($fb_app);
+    $fb_permission_data = isset($fb_app_data['fb_permission']) ? $fb_app_data['fb_permission'] : NULL;
+    $form['fb_app_data']['fb_permission'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Facebook extended permissions'),
+      '#tree' => TRUE,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#description' => t('This list is generated automatically, by querying facebook for all known extended permissions.  Many of these will not actually work!  (When you have 500 million users, your code can suck.)<br/>  Choose only from <a target=_blank href=http://developers.facebook.com/docs/authentication/permissions/>the permissions your application is actually allowed to use</a>.  If you see an "invalid permission" error, return here and un-select that permission.'),
+    );
+
+    try {
+      // http://developers.facebook.com/docs/reference/fql/permissions_info
+      // Apparently, this query required an access token, so this won't work when creating an app, only when editing one.
+      $result = fb_fql_query($fb,
+                             "SELECT permission_name, header, summary FROM permissions_info WHERE 1",  // FQL, no {curly_brackets}
+                             array('access_token' => fb_get_token($fb)));
+
+      foreach ($result as $data) {
+        $options[$data['permission_name']] = $data['header'] . ' - ' . $data['summary'] . " ($data[permission_name])";
+      }
+
+      // First the perms that will be required.
+      if (!isset($fb_permission_data['prompt'])) {
+        $fb_permission_data['prompt'] = array();
+      }
+      $form['fb_app_data']['fb_permission']['prompt'] = array(
+        '#type' => 'checkboxes',
+        '#title' => t('Required extended permissions'),
+        '#options' => $options,
+        '#default_value' => $fb_permission_data['prompt'],
+        '#description' => t('Prompt users when they first authorize the application.  Select only the most important features.'),
+      );
+      // Next the optional perms.
+      if (!isset($fb_permission_data['map'])) {
+        $fb_permission_data['map'] = array();
+      }
+      $form['fb_app_data']['fb_permission']['map'] = array(
+        '#type' => 'checkboxes',
+        '#title' => t('Optional extended permissions'),
+        '#options' => $options,
+        '#default_value' => $fb_permission_data['map'],
+        '#description' => t('Which extended permissions does this application use?  Users will be able to grant these permissions on their user edit pages.'),
+      );
+
+    }
+    catch (Exception $e) {
+      if ($fb_app->apikey) {
+        // If there's an apikey, this is an unexpected error.
+        drupal_set_message(t('Failed to get extended permissions.  %msg', array('%msg' => $e->getMessage())), 'warning');
+      }
+      // Drupal will not display this properly in the collapsed fieldset.  Not sure how to fix!
+      $form['fb_app_data']['fb_permission']['msg'] = array(
+        '#type' => 'markup',
+        '#value' => t('Failed to get extended permissions from facebook.   Submit this form, then click "edit" to see extended permission options.'),
+      );
+    }
+  }
+}
+

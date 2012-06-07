@@ -1,0 +1,214 @@
+<?php
+
+/**
+ * @file
+ * Install file to support fb.module.
+ *
+ */
+
+// Normally fb_settings.inc is included in settings.php or by fb.module, but that is not available during update.php.
+if (!function_exists('fb_settings')) {
+  module_load_include('inc', 'fb', 'fb_settings');
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+function fb_requirements($phase) {
+  $t = get_t();
+  $items = array();
+
+  // fb.module and Facebook's PHP libs require JSON extensions.
+  if (!function_exists('json_encode')) {
+    $items[] = array(
+      'value' => $t('Not found'),
+      'severity' => REQUIREMENT_ERROR,
+      'description' => $t('JSON extension for PHP'),
+    );
+  }
+
+  // Disable these checks at install time, because failure then causes more
+  // problems, due to module dependencies and Drupal's poor handling of
+  // requirement errors.
+  if ($phase != 'runtime') {
+    return $items;
+  }
+
+  $status = array('title' => $t('Drupal for Facebook Settings'));
+  if (function_exists('fb_settings')) {
+    if ($phase == 'runtime') {
+      $status['value'] = $t('Included');
+    }
+    $status['severity'] = REQUIREMENT_OK;
+  }
+  else {
+    if ($phase == 'runtime') {
+      $status['value'] = $t('Not included');
+    }
+    $status['severity'] = REQUIREMENT_ERROR;
+    $path = drupal_get_path('module', 'fb');
+    if (!$path)
+      // Not set during install.php
+      $path = 'modules/fb';
+
+    $status['description'] = $t('Add something like <strong>include "%path";</strong> to your settings.php.', array('%path' => $path . '/fb_settings.inc'));
+  }
+  $items[] = $status;
+
+  $status = array('title' => $t('Facebook PHP SDK'));
+
+  // Find Facebook's PHP SDK.  Use libraries API if enabled.
+  $fb_lib_path = function_exists('libraries_get_path') ? libraries_get_path('facebook-php-sdk') : 'sites/all/libraries/facebook-php-sdk';
+  $fb_platform = variable_get(FB_VAR_API_FILE, $fb_lib_path . '/src/facebook.php');
+
+  if (class_exists('Facebook')) {
+    $status['value'] = Facebook::VERSION;
+    if (Facebook::VERSION < "3" || Facebook::VERSION > "4") {
+      $status['description'] = $t('Expected version 3.x.y of Facebook PHP SDK.');
+      $status['severity'] = REQUIREMENT_ERROR;
+    }
+    else {
+      $status['description'] = $fb_platform;
+      $status['severity'] = REQUIREMENT_OK;
+    }
+  }
+  elseif (include($fb_platform)) { // include() better than file_exists().
+    $status['description'] = $t('Facebook SDK found at %path',
+                                array('%path' => $fb_platform));
+    $status['severity'] = REQUIREMENT_OK;
+    if ($phase == 'runtime') {
+      $status['value'] = $t('Found');
+    }
+  }
+  else {
+    $status['description'] = $t('Facebook client API not found.  See modules/fb/README.txt');
+    $status['severity'] = REQUIREMENT_ERROR;
+    if ($phase == 'runtime') {
+      $status['value'] = $t('Not found');
+    }
+  }
+  $items[] = $status;
+
+  // If user 0 has fbu in its data, that can cause real problems.  Test copied from fb_devel.module.
+  $result = db_query('SELECT count(uid) FROM {users} WHERE data LIKE "%\"app_specific\"%" OR data LIKE "%\"is_app_user\"%" OR data LIKE "\"fbu\"%"');
+  $count = db_result($result);
+  if ($count) {
+    $status = array(
+      'title' => $t('Drupal for Facebook obsolete data.'),
+      'description' => $t('Early versions of Drupal for Facebook stored information in users table.  Leave fb_devel.module enabled, and this data will be cleared during cron jobs.'),
+    );
+    $status['value'] = $t('Found %count rows', array('%count' => $count));
+    $status['severity'] = REQUIREMENT_WARNING;
+    $items[] = $status;
+  }
+
+  // Older versions of modules/fb allowed caching when users are logged into facebook (but anonymous to drupal).
+  $result = db_query('SELECT count(cid) FROM {cache_page} WHERE data like \'%"fbu":"%\'');
+  $count = db_result($result);
+  if ($count) {
+    $status = array(
+      'title' => $t('Facebook Data in Page Cache'),
+      'description' => $t('Pages have been cached while user logged into facebook.  This might show users\' private data to others.  Clearing cache should solve this problem.'),
+    );
+    $status['value'] = $t('Found %count cached pages', array('%count' => $count));
+    $status['severity'] = REQUIREMENT_ERROR;
+    $items[] = $status;
+  }
+
+
+
+  return $items;
+}
+
+
+
+function fb_install() {
+  _fb_install_set_weight();
+
+  drupal_set_message(st('Drupal for Facebook modules enabled.  Be sure to install facebook\'s client libraries and modify your settings.php!  Read modules/fb/README.txt and <a href="!doc_url" target="_blank">the online documentation for Drupal for Facebook</a> for details.',
+      array('!doc_url' => 'http://drupal.org/node/195035')
+                       ));
+}
+
+function fb_uninstall() {
+  foreach (array(
+             FB_VAR_LANGUAGE_OVERRIDE,
+             FB_VAR_JS_SDK,
+             FB_VAR_API_FILE,
+             FB_VAR_JS_CHANNEL,
+             FB_VAR_VERBOSE,
+             FB_VAR_APIKEY,
+           ) as $var) {
+    variable_del($var);
+  }
+  db_query("DELETE FROM {variable} WHERE name like 'fb_language_%'");
+}
+
+function _fb_install_set_weight() {
+  db_query("UPDATE {system} SET weight=-2 WHERE name='fb'");
+}
+
+function fb_update_6000() {
+  $ret = array();
+  //_fb_install_alter_session_table(); // no longer need to do this.
+  return $ret;
+}
+
+function fb_update_6001() {
+  $ret = array();
+  $message = 'IMPORTANT: Drupal for Facebook modules have moved around!  Check your <em>modules/fb/</em> directory, and make sure you do not have duplicates of fb_feed.module or fb_views.module.  If so, delete the entire <em>modules/fb/</em> directory and re-install.';
+  drupal_set_message($message);
+  watchdog('fb', $message);
+  return $ret;
+}
+
+function fb_update_6002() {
+  $ret = array();
+  $message = 'IMPORTANT: Drupal for Facebook connect URLs have changed.  You must manually edit each of your applications.  Pressing the save button will update the connect URL property.';
+  drupal_set_message($message);
+  watchdog('fb', $message);
+  return $ret;
+}
+
+
+function fb_update_6003() {
+  $ret = array();
+  $result = db_query("SELECT * FROM {fb_app}");
+  $items = array();
+  while ($data = db_fetch_object($result)) {
+    $items[] = l($data->title, 'admin/build/fb/app/' . $data->label . '/fb/set_props');
+  }
+  if (count($items)) {
+    $message = 'Manual action required!.  Callback URLs for canvas page applications have changed.  Click below to update the settings, on facebook, for each of your applications.';
+    $message .= theme('item_list', $items);
+    drupal_set_message($message);
+    watchdog('fb', $message, array(), WATCHDOG_WARNING);
+  }
+
+  $ret[] = array('success' => FALSE, 'query' => t('Manual action required.  Go to !link and set properties for each facebook application.', array('!link' => l('Facebook Applications', 'admin/build/fb'))));
+  return $ret;
+
+}
+
+/**
+ * Convenience function to display messages like the one from fb_app_update_6003.
+ */
+function fb_install_property_message(&$ret, $reason) {
+  $result = db_query("SELECT * FROM {fb_app}");
+  $items = array();
+  while ($data = db_fetch_object($result)) {
+    $items[] = l($data->title, 'admin/build/fb/app/' . $data->label . '/fb/set_props', array('attributes' => array('target' => '_blank')));
+  }
+  if (count($items)) {
+    $message = 'Manual action required!.  !reason  Click below to update the settings, on facebook, for each of your applications.  !list';
+    $args = array(
+      '!reason' => $reason,
+      '!list' => theme('item_list', $items),
+    );
+    drupal_set_message(t($message, $args), 'warning', FALSE);
+    watchdog('fb', $message, $args, WATCHDOG_WARNING);
+  }
+
+  $ret[] = array('success' => FALSE, 'query' => t('Manual action required.  Go to !link and set properties for each facebook application.', array('!link' => l('Facebook Applications', 'admin/build/fb'))));
+
+}

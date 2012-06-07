@@ -1,0 +1,58 @@
+<?php
+
+/**
+ * @file
+ * Rules integration for the Drupal for Facebook module.
+ */
+
+/**
+ * Implementation of hook_fb_user().
+ */
+function fb_rules_fb_user($op, $data, &$return) {
+  global $user;
+
+  $fb_app = isset($data['fb_app']) ? $data['fb_app'] : NULL;
+  $fb = isset($data['fb']) ? $data['fb'] : NULL;
+
+  // Use devel module to figure out when this hook is called and what it is passed.
+  // dpm(func_get_args(), "fb_rules_fb($op) called"); // debug
+
+  if ($op == FB_USER_OP_POST_USER_CONNECT) { // User connected local account with FB account
+    rules_invoke_event('fb_user_connected', $user);
+  }
+  elseif ($op == FB_USER_OP_POST_USER_DISCONNECT) { // User disconnected local account from FB account
+    rules_invoke_event('fb_user_disconnected', $user);
+  }
+  elseif ($op == FB_USER_OP_POST_EXTERNAL_LOGIN) {  // User logged in through FB
+    rules_invoke_event('fb_user_login', $user);
+  }
+}
+
+/**
+ * Implementation of hook_fb_friend().
+ * @see modules/fb/contrib/fb_friend.module
+ */
+function fb_rules_fb_friend($op, $data, &$return) {
+  global $user;
+
+  $fb_app = isset($data['fb_app']) ? $data['fb_app'] : NULL;
+  $fb = isset($data['fb']) ? $data['fb'] : NULL;
+
+  // TODO: info on inviter/invitee, $data['fb_friend']
+  if ($op == FB_FRIEND_OP_REQUEST_SUBMIT) {
+    if (isset($data['ids']) && count($data['ids'])) { // User submitted FB invitation
+      rules_invoke_event('fb_invite_submitted', $user); // Trigger 'fb_invite_submitted' rules
+    }
+    else {
+      // User skip the invitation
+    }
+  }
+  elseif ($op == FB_FRIEND_OP_REQUEST_ACCEPT) {
+    if (isset($data['ids']) && count($data['ids'])) { // User submitted FB invitation
+      rules_invoke_event('fb_invite_accepted', $user); // Trigger 'fb_invite_submitted' rules
+    }
+    else {
+      // User skip the invitation
+    }
+  }
+}

@@ -1,0 +1,12 @@
+name = Chat Room
+package = Chat
+description = Enables the creation of rooms that provide access to chats and chat archives.
+core = 6.x
+
+
+; Information added by drupal.org packaging script on 2011-09-18
+version = "6.x-2.18"
+core = "6.x"
+project = "chatroom"
+datestamp = "1316309805"
+

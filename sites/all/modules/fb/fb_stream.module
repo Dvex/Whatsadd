@@ -1,0 +1,142 @@
+<?php
+
+/**
+ * @file
+ * Support for Facebook's Stream API.
+ *
+ * http://wiki.developers.facebook.com/index.php/Using_the_Open_Stream_API
+ * http://developers.facebook.com/docs/guides/policy/stream
+ *
+ * At the moment we support only fb_stream_publish_dialog() for
+ * writing to a stream via a javascript dialog.  The Stream API allows
+ * for much more, so eventually this module will do more.
+ */
+
+define('FB_STREAM_DIALOGS', 'fb_stream_dialogs');
+
+/**
+ * Publish to a user's stream, or update their status.
+ *
+ * Calling this method will, through javascript, add content to a
+ * user's wall or update their status.  The javascript will be written
+ * either during the current page request, or the next complete page
+ * that Drupal serves.  (So it is safe to call this during requests
+ * which end in a drupal_goto() rather than a page.)
+ *
+ * When invoked on an FBML canvas page request,
+ * http://wiki.developers.facebook.com/index.php/Facebook.streamPublish
+ * will be invoked.  When a Facebook Connect page,
+ * http://developers.facebook.com/docs/?u=facebook.jslib.FB.Connect.streamPublish
+ * will be called instead.  The result should be the same.
+ *
+ * @param $params
+ *   An associative array of parameters to pass to Facebook's API.
+ *   See Facebook's doc for additional detail.  Pass in strings and
+ *   data structures.  Drupal for Facebook will json encode them
+ *   before passing to javascript.  Use these keys:
+ *   - 'user_message'
+ *   - 'attachment'
+ *   - 'action_links'
+ *   - 'target_id'
+ *   - 'user_message_prompt'
+ *   - 'auto_publish'
+ *   - 'actor_id'
+ */
+function fb_stream_publish_dialog($params, $fb_app = NULL) {
+  if (!isset($_SESSION[FB_STREAM_DIALOGS])) {
+    $_SESSION[FB_STREAM_DIALOGS] = array();
+  }
+
+  if (!isset($fb_app)) {
+    $fb_app = $GLOBALS['_fb_app'];
+  }
+
+  if (!isset($_SESSION[FB_STREAM_DIALOGS][$fb_app->apikey])) {
+    $_SESSION[FB_STREAM_DIALOGS][$fb_app->apikey] = array();
+  }
+  $_SESSION[FB_STREAM_DIALOGS][$fb_app->apikey][] = $params;
+
+}
+
+/**
+ * Get the data for one or more stream dialogs.  Use this function in
+ * ajax callbacks, where you want to publish dialog(s) in response to
+ * javascript events.
+ */
+function fb_stream_get_stream_dialog_data($fb_app = NULL) {
+  if (!$fb_app)
+    $fb_app = $GLOBALS['_fb_app'];
+
+  if (isset($_SESSION[FB_STREAM_DIALOGS]) &&
+      isset($_SESSION[FB_STREAM_DIALOGS][$fb_app->apikey])) {
+    $data = $_SESSION[FB_STREAM_DIALOGS][$fb_app->apikey];
+    unset($_SESSION[FB_STREAM_DIALOGS][$fb_app->apikey]);
+    return $data;
+  }
+  else {
+    return array();
+  }
+}
+
+/**
+ * Implementation of hook_fb().
+ *
+ * When adding javascript to FBML and Conect pages, we add
+ */
+function fb_stream_fb($op, $data, &$return) {
+  if ($op == FB_OP_JS) {
+    //dpm(func_get_args(), "fb_stream_fb($op)");
+    $params_array = fb_stream_get_stream_dialog_data($data['fb_app']);
+    $js = fb_stream_js($params_array);
+    $return += $js;
+  }
+  if ($op == FB_OP_POST_INIT) {
+    drupal_add_js(drupal_get_path('module', 'fb_stream') . '/fb_stream.js');
+  }
+}
+
+/**
+ * Convert our data structure to javascript.
+ */
+function fb_stream_js($params_array) {
+  $return = array();
+  foreach ($params_array as $params) {
+    /*
+    $args = array();
+    // These are the defaults:
+    foreach (array(
+               'method' => '"stream.publish"',
+               'user_message' => '',
+               'attachment' => '{}',
+               'action_links' => '{}',
+               'target_id' => 'null',
+               'user_message_prompt' => 'null',
+               'auto_publish' => 'null',
+               'actor_id' => 'null',
+             ) as $key => $default) {
+      if (isset($params[$key])) {
+        // Encode the params passed to fb_stream_publish_dialog.
+        if (in_array($key, array('auto_publish'))) {
+          // no encoding
+          $args[$key] = $params[$key];
+        }
+        else {
+          $args[] = json_encode($params[$key]);
+        }
+
+      }
+      else {
+        // Use default
+        $args[] = $default;
+      }
+    }
+    */
+
+    $params['method'] = 'stream.publish';
+
+    // Add stream dialog javascript to a canvas page.
+    $return[] = "FB.ui(" . json_encode($params) . ");\n";
+  }
+
+  return $return;
+}

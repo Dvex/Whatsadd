@@ -1,0 +1,501 @@
+/*
+Theme Name: Urban View
+Theme URI: http://drupal.org/project/urban_view
+Description: Grungy theme with two-column layout suitable for a wide range of bloggers
+Converted to Drupal 6 from Wordpress
+Author: Jason Moore
+Author URI: http://arborwebdevelopment.com
+Version: 1.03
+Orginal Author: cssmayo.com
+Original Author URI: http://cssmayo.com
+Tags: dark, green, black, two-columns, right-sidebar, fixed-width
+*/
+* {
+  padding: 0; 
+  margin: 0; 
+  outline: 0; 
+}
+body {
+  background: #0c1312 url(images/body.jpg) no-repeat center 0;
+  color: #636363;
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 18px;
+}
+.left, .alignleft {
+  float: left;
+  display: inline;
+}
+.right, .alignright {
+  float: right; 
+  display: inline;
+}
+.aligncenter {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cl {
+  font-size: 0; 
+  line-height: 0; 
+  height: 0; 
+  display: block; 
+  clear: both; 
+}
+a { 
+  color: #e6124e; 
+  text-decoration: underline;
+  cursor: pointer;
+}
+a:hover { 
+  background: #e6124e; 
+  color: #fff; 
+  text-decoration: none;
+}
+a img {
+  border: 0;
+}
+h1 {
+  font-size: 65px; 
+  font-family: "Trebuchet MS", Arial, sans-serif; 
+  font-weight: normal; 
+  line-height: 50px;
+}
+h2 {
+  font-size: 20px; 
+  font-family: "Trebuchet MS", Arial, sans-serif; 
+  font-weight: bold; 
+  line-height: 23px;
+}
+h3 {
+  font-size: 18px; 
+  font-family: "Trebuchet MS", Arial, sans-serif; 
+  font-weight: normal; 
+  line-height: 24px; 
+  color: #fff;
+}
+h2 span {
+  background: #8a1738;  
+  color: #fff; 
+}
+h2 span a {
+  color: #fff; 
+  text-decoration: none;
+}
+#shell {
+  width: 830px; 
+  margin: 0 auto;
+}
+#header {
+  height: 190px; 
+  position: relative;
+}
+#header h1 {
+  padding-top: 34px; 
+} /* Was 54px */
+#header h1 a {
+  text-decoration: none; 
+  background: transparent !important; 
+}
+.rss { 
+  font-size: 0;
+  line-height: 0; 
+  width: 184px; 
+  height: 40px; 
+  text-indent: -4000px; 
+  background: url(images/rss.gif) no-repeat 0 0 !important; 
+  top: 45px; 
+  left: 610px; 
+  position: absolute; 
+}
+.rss:hover {
+  background-position: 0 bottom !important; 
+}
+.site-slogan {
+  font-family: "Trebuchet MS", Arial, sans-serif; 
+  color: #fff; 
+  font-size: 17px; 
+  font-style: italic; 
+  display: block; 
+  padding: 20px 0 0 30px;
+  clear: both;
+}
+#main {}
+#content {
+  float: left; 
+  width: 553px; 
+}
+#sidebar { 
+  float: right; 
+  width: 230px; 
+  color: #aaa; 
+}
+#sidebar ul { 
+  list-style-type: none;
+}
+#sidebar h2 {
+  color:  #f3f3f3;
+  font-style: italic;
+  font-weight: normal;
+  background:  url(images/sidebar-h2.gif) no-repeat 0 0;
+  height: 47px;
+  line-height: 43px;
+  padding: 0 17px;
+  position: relative; 
+  left: -17px; 
+}
+#sidebar ul li { 
+  background: url("images/li-border.gif") repeat-x scroll 0 bottom transparent;
+  line-height: 24px;
+  margin-bottom: 0;
+  list-style-image: url("images/bul.gif");
+}
+#sidebar ul ul li {
+  background: url(images/li-border.gif) repeat-x 0 bottom; 
+  line-height: 24px; 
+  margin-bottom: 0;
+}
+#sidebar ul ul li li {
+  background: none;
+}
+#sidebar ul ul ul  {
+  background: url(images/li-border.gif) repeat-x 0 2px;
+  padding-left: 10px;
+}
+#sidebar a {
+  color: #8fc2be;
+  text-decoration: none; 
+  background: transparent !important; 
+}
+#sidebar a:hover { 
+  color: #e6124e; 
+}
+#sidebar ul ul li a { }
+#sidebar ul li ul {
+  background: url("images/li-border.gif") repeat-x scroll 0 2px transparent;
+  padding-left: 10px;
+}
+#sidebar ul li .last {
+  background:none;
+}
+#sidebar .recentcomments a { 
+  background:transparent !important;
+}
+#sidebar li.widget_text,
+#sidebar li.widget_search,
+#sidebar li.widget_tag_cloud,
+#sidebar li.widget_calendar
+{ 
+  background: url(images/li-border.gif) repeat-x 0 bottom; 
+  padding-bottom: 10px;
+}
+#sidebar .widget_calendar {}
+#sidebar .widget_calendar table { 
+  width:70%; 
+  text-align: center;
+}
+#sidebar .widget_calendar th,
+#sidebar .widget_calendar td { 
+  padding:2px; 
+}
+#sidebar .widget_calendar a { 
+  text-decoration: underline; 
+  background: transparent !important;
+}
+#sidebar .widget_calendar a:hover { 
+  color: #e6124e !important; 
+  text-decoration: none;
+}
+.post { 
+  position: relative; 
+  margin-bottom: 80px; 
+}
+.post h2 { 
+  padding: 5px 0 20px 70px;
+  min-height: 50px;
+}
+.post-cnt { 
+  padding: 10px;
+}
+.post-c { 
+  background: url(images/post-c.png); 
+  width: 100%;
+}
+.post-b { 
+  height: 82px; 
+  background: url(images/post-b.png) no-repeat 0 0; 
+}
+.post-b .post-cnt { 
+  padding-top: 0;
+}
+.post .entry { 
+  overflow: hidden; 
+}
+.post .entry p { 
+  padding-bottom: 15px;
+}
+.post .entry ol,
+.post .entry ul { 
+  padding: 0 0 15px 30px;
+}
+.post .entry li {
+  padding: 0 0 3px 0;
+}
+.post .entry blockquote { 
+  padding-left: 45px; 
+  background: url(images/quote.gif) no-repeat 5px 5px;
+}
+.post-meta { 
+  color: #fff; 
+  font-size: 11px;
+}
+.post-meta p { 
+  position: relative; 
+  z-index: 2;
+}
+.post .entry h1 { 
+  font-size: 24px; 
+  line-height: 140%; 
+  font-weight: bold;
+}
+.post .entry h2 { 
+  font-size: 22px; 
+  padding: 0; 
+  min-height: 0; 
+  font-weight: bold;
+}
+.post .entry h3 { 
+  font-size: 20px; 
+  font-weight: bold; 
+  color: #636363
+}
+.post .entry h4 { 
+  font-size: 16px; 
+  font-weight: bold;
+}
+.post .entry h5 { 
+  font-size: 14px; 
+  font-weight: bold;
+}
+.post .entry h6 { 
+  font-size: 12px; 
+  font-weight: bold;
+}
+
+small.date { 
+  position: absolute; 
+  top: -50px; 
+  left: -50px; 
+  width: 110px; 
+  height: 62px; 
+  text-align: center; 
+  color: #739492; 
+  font-size: 22px; 
+  line-height: 24px; 
+  font-family: "Trebuchet MS", Arial, sans-serif; 
+  background: url(images/date.gif) no-repeat 0 0; 
+  padding: 60px 0 0 18px;
+}
+.num-comments { 
+  display: block; 
+  position: relative; 
+  width: 165px; 
+  height: 40px; 
+  background: url(images/comments.gif) no-repeat 0 0; 
+  font-size: 10px;
+  padding: 36px 0 0 85px; 
+  left: -75px; 
+  margin-top: -25px;
+}
+.num-comments a { 
+  font-weight: bold; 
+  color: #1b4441; 
+  background: transparent !important; 
+}
+.num-comments a:hover { 
+  color: #e6124e; 
+}
+#footer { 
+  height: 370px; 
+  background: url(images/footer.jpg) no-repeat center 0; 
+  width: 100%;
+  position: relative; 
+  color: #597b77;
+}
+#footer p { 
+  text-align: center; 
+  padding-top: 180px; 
+}
+#footer p a { 
+  color: #597b77;
+}
+#footer p a:hover { 
+  background: #597b77; 
+  color: #fff;
+}
+h2.pagetitle,
+h2.center { 
+  color: #fff; 
+  text-align: center; 
+  padding: 20px 0; 
+  font-weight: normal;
+}
+.post-page { }
+.post-page h2 { 
+  min-height: 2px; 
+  padding-left: 0;
+}
+.post-single { 
+  margin-bottom: 30px;
+}
+.page-nav { 
+  font-size: 9px; 
+  padding-bottom: 10px; 
+  color: #851c39; 
+  position: relative; 
+  z-index: 30;
+}
+.page-nav div { 
+  float: none; 
+  display: block; 
+}
+.page-nav .alignright { 
+  text-align: right; 
+}
+ol.commentlist, 
+ul.commentlist { 
+  list-style-type: none; 
+}
+ol.commentlist li { 
+  background: url(images/post-c.png); 
+  padding: 10px; 
+  margin-bottom: 5px; 
+  height: 100%;
+}
+ol.commentlist li p { 
+  padding-top: 10px;
+}
+ol.commentlist li img { 
+  float:right
+}
+ol.commentlist li .comment-author { 
+  font-weight: bold;
+}
+ol.commentlist li .comment-meta { 
+  font-size: 10px; 
+}
+ol.commentlist li .comment-author,
+ol.commentlist li .comment-author a,
+ol.commentlist li .comment-meta a,
+ol.commentlist li .comment-meta { 
+  color: #aaa; 
+}
+ol.commentlist li a { 
+  color: #777; 
+}
+ol.commentlist li a:hover { 
+  background: #777; 
+  color: #fff; 
+}
+input, textarea, select { 
+  font-size: 12px; 
+  font-family: Arial, sans-serif; 
+  background: #000; 
+  color: #aaa; 
+  border: 0;
+}
+input, textarea { 
+  padding: 5px; 
+}
+textarea { 
+  overflow: auto; 
+}
+h3#comments { 
+  padding: 20px 0 10px 0;
+}
+#respond { 
+  padding: 20px 0 0 0;
+}
+#respond h3 { 
+  padding-bottom: 10px;
+}
+#respond p { 
+  padding-bottom: 10px;
+}
+#respond input { 
+  width: 250px; 
+}
+#respond input#submit { 
+  width: 150px; 
+}
+#respond textarea{ 
+  width: 543px; 
+  height: 180px;
+}
+#content #searchform  { 
+  text-align: center;
+}
+.screen-reader-text { 
+  display:none;
+}
+#searchform input { width:130px;}
+#searchform input#searchsubmit { width:80px;}
+.navigation img {
+  margin: 5px;
+}
+.navigation a:hover {
+  text-decoration: none;
+}
+p.attachment {
+  text-align: center;
+}
+.wp-caption {
+  border: 1px solid #ddd;
+  text-align: center;
+  background-color: #f3f3f3;
+  padding-top: 4px;
+  margin: 10px;
+  -moz-border-radius: 3px;
+  -khtml-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
+}
+.wp-caption img {
+  margin: 0;
+  padding: 0;
+  border: 0 none;
+}
+.wp-caption-dd {
+  font-size: 11px;
+  line-height: 17px;
+  padding: 0 4px 5px;
+  margin: 0;
+}
+.children li {
+  list-style-type: none;
+  background: none !important;
+}
+/* Style Tweaks for Drupal 6 */
+#block-system-0 {
+  text-align: center;
+  padding-top: 5px;
+}
+#mission {
+  text-align: center;
+  background: none repeat scroll 0 0 #8A1738;
+  color: #FFFFFF;
+  margin: 20px 10px;
+  font-style: italic;
+}
+.links ul {
+  float: right;
+}
+.site-logo, 
+.site-name {
+  float: left;
+}
+.site-logo {
+  position: relative;
+  top: 25px;
+  padding-right: 5px;
+}

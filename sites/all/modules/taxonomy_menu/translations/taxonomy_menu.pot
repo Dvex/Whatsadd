@@ -1,0 +1,177 @@
+# $Id: taxonomy_menu.pot,v 1.1.2.2 2009/10/31 22:33:56 hass Exp $
+#
+# LANGUAGE translation of Drupal (root)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  taxonomy_menu.batch.inc: n/a
+#  taxonomy_menu.module,v 1.19.2.2.2.40 2009/10/31 18:39:33 indytechcook
+#  taxonomy_menu.info,v 1.2.4.3 2009/02/20 17:49:51 indytechcook
+#  taxonomy_menu_hierarchy.info,v 1.1.2.2 2009/10/31 18:39:33 indytechcook
+#  taxonomy_menu_path_custom.info,v 1.1.2.2 2009/10/31 18:39:33 indytechcook
+#  taxonomy_menu_vocabulary_path.info,v 1.1.2.2 2009/10/31 18:39:33 indytechcook
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-10-31 22:28+0100\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: taxonomy_menu.batch.inc:47
+msgid "Rebuilding Taxonomy Menu"
+msgstr ""
+
+#: taxonomy_menu.batch.inc:48
+msgid "The menu items have been deleted, and are about to be regenerated."
+msgstr ""
+
+#: taxonomy_menu.batch.inc:49
+msgid "Import progress: Completed @current of @total stages."
+msgstr ""
+
+#: taxonomy_menu.batch.inc:51
+msgid "The Taxonomy Menu rebuild process encountered an error."
+msgstr ""
+
+#: taxonomy_menu.module:35
+msgid "- Disabled -"
+msgstr ""
+
+#: taxonomy_menu.module:43
+msgid "Taxonomy menu"
+msgstr ""
+
+#: taxonomy_menu.module:50
+msgid "Menu"
+msgstr ""
+
+#: taxonomy_menu.module:53
+msgid "With this option enabled, an entry will be created in the menu system for this vocabulary."
+msgstr ""
+
+#: taxonomy_menu.module:58
+msgid "Menu path type"
+msgstr ""
+
+#: taxonomy_menu.module:61
+msgid "The path will be taxonomy/term/tid if <em>Default</em> has been selected.<br />The menu path will be passed through drupal_get_path_alias() function so all aliases will be applied."
+msgstr ""
+
+#: taxonomy_menu.module:70
+msgid "Select to rebuild the menu on submit."
+msgstr ""
+
+#: taxonomy_menu.module:73
+msgid "Rebuild the menu on submit. <strong>Warning</strong>: This will delete then re-create all of the menu items. Only use this option if you are experiencing issues like missing menu items or other inconsistencies."
+msgstr ""
+
+#: taxonomy_menu.module:164
+msgid "The Taxonomy Menu has been rebuilt."
+msgstr ""
+
+#: taxonomy_menu.module:167
+msgid "The Taxonomy Menu has been removed."
+msgstr ""
+
+#: taxonomy_menu.module:214
+msgid "The Taxonomy Menu %menu_name has been updated."
+msgstr ""
+
+#: taxonomy_menu.module:276
+msgid "Term %term has been added to taxonomy menu %menu_name."
+msgstr ""
+
+#: taxonomy_menu.module:292
+msgid "Term %term has been updated in taxonomy menu %menu_name."
+msgstr ""
+
+#: taxonomy_menu.module:300
+msgid "Term %term has been deleted from taxonomy menu %menu_name."
+msgstr ""
+
+#: taxonomy_menu.module:540
+msgid "Could not save the menu link for the taxonomy menu."
+msgstr ""
+
+#: taxonomy_menu.module:579
+msgid "Default"
+msgstr ""
+
+#: taxonomy_menu.module:832
+msgid "Options"
+msgstr ""
+
+#: taxonomy_menu.module:861
+msgid "Synchronise changes to this vocabulary"
+msgstr ""
+
+#: taxonomy_menu.module:862
+msgid "Every time a term is added/deleted/modified, the corresponding menu link will be altered too."
+msgstr ""
+
+#: taxonomy_menu.module:867
+msgid "Display number of items"
+msgstr ""
+
+#: taxonomy_menu.module:868
+msgid "Display the number of items per taxonomy terms. Will not show up for vocabulary menu items."
+msgstr ""
+
+#: taxonomy_menu.module:873
+msgid "Hide empty terms"
+msgstr ""
+
+#: taxonomy_menu.module:874
+msgid "Hide terms with no items attached to them."
+msgstr ""
+
+#: taxonomy_menu.module:879
+msgid "Add item for vocabulary"
+msgstr ""
+
+#: taxonomy_menu.module:880
+msgid "Shows the vocabulary name as the top level menu item of the taxonomy menu."
+msgstr ""
+
+#: taxonomy_menu.module:885
+msgid "Auto expand menu items"
+msgstr ""
+
+#: taxonomy_menu.module:886
+msgid "Automatically show all menu items as expanded."
+msgstr ""
+
+#: taxonomy_menu.module:891
+msgid "Display descendants"
+msgstr ""
+
+#: taxonomy_menu.module:892
+msgid "TODO"
+msgstr ""
+
+#: taxonomy_menu.module:897
+msgid "Use 'all' at the end of URL"
+msgstr ""
+
+#: taxonomy_menu.module:899
+msgid "This changes tid+tid+tid to \"All\" in term when <em>Display descendants</em> has been selected.<br />Only used if <em>Menu path type</em> is \"Default path\".<br />Works with default taxonomy page."
+msgstr ""
+
+#: taxonomy_menu.module:942
+msgid "Menu and taxonomy name mismatch: @title != @name"
+msgstr ""
+
+#: taxonomy_menu.info:0;0 taxonomy_menu_hierarchy/taxonomy_menu_hierarchy.info:0 taxonomy_menu_path_custom/taxonomy_menu_path_custom.info:0 taxonomy_menu_vocabulary_path/taxonomy_menu_vocabulary_path.info:0
+msgid "Taxonomy Menu"
+msgstr ""
+
+#: taxonomy_menu.info:0
+msgid "Adds links to taxonomy terms to a menu."
+msgstr ""
+

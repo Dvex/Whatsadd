@@ -124,7 +124,7 @@ function install_main() {
       print theme('install_page', '');
       exit;
     }
-
+	 print_r("YAOMING!!!");
     // Change the settings.php information if verification failed earlier.
     // Note: will trigger a redirect if database credentials change.
     if (!$verify) {

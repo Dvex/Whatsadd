@@ -1,0 +1,11 @@
+name = Database logging
+description = Logs and records system events to the database.
+package = Core - optional
+version = VERSION
+core = 6.x
+
+; Information added by drupal.org packaging script on 2012-02-29
+version = "6.25"
+project = "drupal"
+datestamp = "1330534547"
+
